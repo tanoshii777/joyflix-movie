@@ -14,6 +14,7 @@ import type { Movie } from "./types/movie";
 
 const categories: string[] = [
   "Action",
+  "Romance",
   "Horror",
   "Sci-Fi",
   "Drama",

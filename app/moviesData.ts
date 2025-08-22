@@ -1,5 +1,5 @@
 // app/moviesData.ts
-import type { Movie } from "./types/movie"
+import type { Movie } from "./types/movie";
 
 export const movies: Movie[] = [
   {
@@ -32,7 +32,8 @@ export const movies: Movie[] = [
     startTime: 120,
     category: "Thriller",
     subtitle: "/subtitles/Train to busan.vtt",
-    description: "A father and daughter fight for survival on a train as a zombie outbreak takes over South Korea.",
+    description:
+      "A father and daughter fight for survival on a train as a zombie outbreak takes over South Korea.",
   },
   {
     id: 4,
@@ -42,7 +43,8 @@ export const movies: Movie[] = [
     startTime: 120,
     category: "Sci-Fi",
     subtitle: "/subtitles/Avengers2019.vtt",
-    description: "The Avengers assemble once more to undo the devastation caused by Thanos and save the universe.",
+    description:
+      "The Avengers assemble once more to undo the devastation caused by Thanos and save the universe.",
   },
   {
     id: 5,
@@ -129,7 +131,8 @@ export const movies: Movie[] = [
     startTime: 120,
     category: "Animation",
     subtitle: "/subtitles/Elemental.vtt",
-    description: "Follows Ember and Wade, in a city where fire-, water-, earth- and air-residents live together.",
+    description:
+      "Follows Ember and Wade, in a city where fire-, water-, earth- and air-residents live together.",
   },
   {
     id: 13,
@@ -215,7 +218,8 @@ export const movies: Movie[] = [
     video: "/movies/Pirates of the Caribbean The Curse of the Black Pearl.mp4",
     startTime: 120,
     category: "Fantasy",
-    subtitle: "/subtitles/Pirates of the Caribbean The Curse of the Black Pearl.vtt",
+    subtitle:
+      "/subtitles/Pirates of the Caribbean The Curse of the Black Pearl.vtt",
     description:
       "Blacksmith Will Turner teams up with eccentric pirate Captain Jack Sparrow to save Elizabeth Swann, the governor's daughter and his love, from Jack's former pirate allies, who are now undead.",
   },
@@ -241,4 +245,71 @@ export const movies: Movie[] = [
     description:
       "Jack Sparrow races to recover the heart of Davy Jones to avoid enslaving his soul to Jones' service, as other friends and foes seek the heart for their own agenda as well.",
   },
-]
+  {
+    id: 24,
+    title: "Nowhere",
+    thumbnail: "/posters/nowhere.png",
+    video: "/movies/Nowhere.mp4",
+    startTime: 120,
+    category: "Thriller",
+    subtitle: "/subtitles/nowhere.vtt",
+    description:
+      "A young pregnant woman named Mia escapes from a country at war by hiding in a maritime container aboard a cargo ship. After a violent storm, Mia gives birth to her child while lost at sea, where she must fight to survive.",
+  },
+  {
+    id: 25,
+    title: "Anabelle",
+    thumbnail: "/posters/anabelle.png",
+    video: "/movies/Anabelle.mp4",
+    startTime: 120,
+    category: "Horror",
+    subtitle: "/subtitles/",
+    description:
+      "A couple begins to experience terrifying supernatural occurrences involving a vintage doll shortly after their home is invaded by satanic cultists.",
+  },
+  {
+    id: 26,
+    title: "The Bad Guys 2",
+    thumbnail: "/posters/the bad guy 2.png",
+    video: "/movies/The Bad Guys 2.mkv",
+    startTime: 120,
+    category: "Animation",
+    subtitle: "/subtitles/the bad guy 2.vtt",
+    description:
+      "The now-reformed Bad Guys are trying (very, very hard) to be good, but instead find themselves hijacked into a high-stakes, globe-trotting heist, masterminded by a new team of criminals they never saw coming: The Bad Girls.",
+  },
+  {
+    id: 27,
+    title: "Dune: Part Two",
+    thumbnail: "/posters/dune part two.png",
+    video: "/movies/Dune Part Two.mp4",
+    startTime: 120,
+    category: "Action",
+    subtitle: "/subtitles/",
+    description:
+      "Paul Atreides unites with the Fremen while on a warpath of revenge against the conspirators who destroyed his family. Facing a choice between the love of his life and the fate of the universe, he endeavors to prevent a terrible future.",
+  },
+  {
+    id: 28,
+    title: "Nobody 2",
+    thumbnail: "/posters/nobody2.png",
+    video: "/movies/Nobody 2.mp4",
+    startTime: 120,
+    category: "Action",
+    subtitle: "/subtitles/nobody2.vtt",
+    description:
+      "Suburban dad Hutch Mansell, a former lethal assassin, is pulled back into his violent past after thwarting a home invasion, setting off a chain of events that unravels secrets about his wife Becca's past and his own.",
+  },
+
+  {
+    id: 30,
+    title: "F1: The Movie",
+    thumbnail: "/posters/f1 the movie.png",
+    video: "/movies/F1 The Movie.mkv",
+    startTime: 120,
+    category: "Action",
+    subtitle: "/subtitles/f1 the movie.vtt",
+    description:
+      "A Formula One driver comes out of retirement to mentor and team up with a younger driver.",
+  },
+];
