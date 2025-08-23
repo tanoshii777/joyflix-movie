@@ -1,117 +1,173 @@
-"use client";
+"use client"
 
-import React, { useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
+import type React from "react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Loader2, Eye, EyeOff, Lock, User } from "lucide-react"
 
 export default function LoginPage() {
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const router = useRouter();
+  const [identifier, setIdentifier] = useState("")
+  const [password, setPassword] = useState("")
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState("")
+  const [showPassword, setShowPassword] = useState(false)
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+    e.preventDefault()
+    setLoading(true)
+    setError("")
+
+    if (!identifier.trim()) {
+      setError("Email or username is required")
+      setLoading(false)
+      return
+    }
+
+    if (!password.trim()) {
+      setError("Password is required")
+      setLoading(false)
+      return
+    }
 
     try {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier, password }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
+
       if (!res.ok) {
-        alert("❌ " + (data.error || "Login failed"));
-        return;
+        setError(data.error || "Login failed")
+        return
       }
 
-      localStorage.setItem("auth", "true");
-      router.push("/");
+      localStorage.setItem("auth", "true")
+      localStorage.setItem("user", JSON.stringify(data.user))
+      router.push("/dashboard")
     } catch (err) {
-      console.error(err);
-      alert("⚠️ Something went wrong.");
+      console.error(err)
+      setError("Network error. Please try again.")
     } finally {
-      setLoading(false);
+      setLoading(false)
     }
-  };
+  }
 
   return (
-    <div className="relative min-h-screen w-full text-white overflow-hidden">
-      {/* 🎥 Background */}
-      <div className="absolute inset-0">
-        <img
-          src="/background/background-image.jpg"
-          alt="Background"
-          className="w-full h-full object-cover"
-        />
-        {/* Dark overlay with gradient for cinematic effect */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black/40 via-black/70 to-black/90" />
+    <div className="min-h-screen auth-gradient flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary/5 rounded-full blur-3xl animate-pulse delay-1000"></div>
       </div>
 
-      {/* Logo top-left */}
-      <div className="absolute top-6 left-8 z-10">
-        <h1 className="text-4xl font-extrabold text-red-600 drop-shadow-lg">
-          JoyFlix
-        </h1>
-      </div>
+      <div className="relative z-10 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-5xl font-bold text-primary mb-3 tracking-tight">JoyFlix</h1>
+          <p className="text-muted-foreground text-base">Welcome back to your favorite streaming platform</p>
+        </div>
 
-      {/* Centered Login Box */}
-      <div className="relative z-10 flex items-center justify-center min-h-screen px-4">
-        <form
-          onSubmit={handleSubmit}
-          className="w-full max-w-md bg-black/75 p-10 rounded-lg shadow-lg backdrop-blur-md"
-        >
-          <h2 className="text-3xl font-bold mb-6">Sign In</h2>
+        <Card className="auth-card shadow-2xl border-0">
+          <CardHeader className="space-y-2 pb-6">
+            <CardTitle className="text-3xl font-bold text-center text-foreground">Sign In</CardTitle>
+            <CardDescription className="text-center text-muted-foreground text-base">
+              Enter your credentials to access your account
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {error && (
+                <Alert className="border-destructive/50 bg-destructive/10 backdrop-blur-sm">
+                  <AlertDescription className="text-destructive font-medium">{error}</AlertDescription>
+                </Alert>
+              )}
 
-          <div className="mb-4">
-            <input
-              type="text"
-              value={identifier}
-              onChange={(e) => setIdentifier(e.target.value)}
-              placeholder="Email or Username"
-              className="w-full p-3 rounded bg-zinc-800 border border-zinc-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500"
-              required
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="identifier" className="text-foreground font-medium flex items-center gap-2">
+                  <User size={16} className="text-primary" />
+                  Email or Username
+                </Label>
+                <Input
+                  id="identifier"
+                  type="text"
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
+                  placeholder="Enter your email or username"
+                  className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12"
+                  disabled={loading}
+                />
+              </div>
 
-          <div className="mb-6">
-            <input
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Password"
-              className="w-full p-3 rounded bg-zinc-800 border border-zinc-700 text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500"
-              required
-            />
-          </div>
+              <div className="space-y-2">
+                <Label htmlFor="password" className="text-foreground font-medium flex items-center gap-2">
+                  <Lock size={16} className="text-primary" />
+                  Password
+                </Label>
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Enter your password"
+                    className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12 pr-12"
+                    disabled={loading}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
+              </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full py-3 bg-red-600 hover:bg-red-700 rounded font-semibold transition"
-          >
-            {loading ? "Signing in..." : "Sign In"}
-          </button>
+              <div className="flex items-center justify-between text-sm">
+                <label className="flex items-center space-x-2 text-muted-foreground cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="rounded border-border/50 bg-input/50 text-primary focus:ring-primary focus:ring-offset-0"
+                  />
+                  <span>Remember me</span>
+                </label>
+                <Link href="#" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                  Forgot password?
+                </Link>
+              </div>
 
-          <div className="flex items-center justify-between text-sm text-gray-400 mt-4">
-            <label className="flex items-center gap-2">
-              <input type="checkbox" className="accent-red-600" /> Remember me
-            </label>
-            <Link href="#" className="hover:underline">
-              Forgot password?
-            </Link>
-          </div>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="button-hover w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                    Signing in...
+                  </>
+                ) : (
+                  "Sign In"
+                )}
+              </Button>
+            </form>
 
-          <p className="text-center text-gray-400 mt-6">
-            New to JoyFlix?{" "}
-            <Link href="/register" className="text-red-400 hover:underline">
-              Sign up now
-            </Link>
-          </p>
-        </form>
+            <div className="text-center text-base text-muted-foreground">
+              New to JoyFlix?{" "}
+              <Link href="/register" className="text-primary hover:text-primary/80 font-semibold transition-colors">
+                Create an account
+              </Link>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
-  );
+  )
 }

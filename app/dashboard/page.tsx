@@ -1,102 +1,94 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
-import Link from "next/link";
-import Image from "next/image";
-import { User, Heart, Star, Clock, Play, Settings } from "lucide-react";
-import { movies as localMovies } from "../moviesData";
-import MovieCard from "../components/MovieCard";
-import NavbarWrapper from "../components/NavbarWrapper";
-import Footer from "../components/Footer";
-import { useFavorites } from "../hooks/useFavorites";
-import { useRatings } from "../hooks/useRatings";
+import { useEffect, useState } from "react"
+import { useRouter } from "next/navigation"
+import Link from "next/link"
+import Image from "next/image"
+import { User, Heart, Star, Clock, Play, Settings } from "lucide-react"
+import { movies as localMovies } from "../moviesData"
+import MovieCard from "../components/MovieCard"
+import NavbarWrapper from "../components/NavbarWrapper"
+import Footer from "../components/Footer"
+import { useFavorites } from "../hooks/useFavorites"
+import { useRatings } from "../hooks/useRatings"
 
 type UserType = {
-  email: string;
-  username?: string;
-  profileImage?: string;
-};
+  email: string
+  username?: string
+  profileImage?: string
+}
 
 export default function DashboardPage() {
-  const router = useRouter();
-  const { favorites } = useFavorites();
-  const { ratings } = useRatings();
+  const router = useRouter()
+  const { favorites } = useFavorites()
+  const { ratings } = useRatings()
 
-  const [user, setUser] = useState<UserType | null>(null);
-  const [authChecked, setAuthChecked] = useState(false);
-  const [watchHistory, setWatchHistory] = useState<any[]>([]);
-  const [continueWatching, setContinueWatching] = useState<any[]>([]);
-  const [profileImage, setProfileImage] = useState<string>("");
+  const [user, setUser] = useState<UserType | null>(null)
+  const [authChecked, setAuthChecked] = useState(false)
+  const [watchHistory, setWatchHistory] = useState<any[]>([])
+  const [continueWatching, setContinueWatching] = useState<any[]>([])
+  const [profileImage, setProfileImage] = useState<string>("")
 
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me")
         if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-          const savedImage = localStorage.getItem(
-            `profile-image-${data.user.email}`
-          );
+          const data = await res.json()
+          setUser(data.user)
+          const savedImage = localStorage.getItem(`profile-image-${data.user.email}`)
           if (savedImage) {
-            setProfileImage(savedImage);
+            setProfileImage(savedImage)
           }
         } else {
-          router.replace("/login");
+          router.replace("/login")
         }
       } catch (err) {
-        console.error("Auth check failed:", err);
-        router.replace("/login");
+        console.error("Auth check failed:", err)
+        router.replace("/login")
       } finally {
-        setAuthChecked(true);
+        setAuthChecked(true)
       }
-    };
+    }
 
-    checkAuth();
-  }, [router]);
+    checkAuth()
+  }, [router])
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem("watch-progress");
+    const savedProgress = localStorage.getItem("watch-progress")
     if (savedProgress) {
-      const progressData = JSON.parse(savedProgress);
+      const progressData = JSON.parse(savedProgress)
       const continueList = Object.entries(progressData)
-        .filter(
-          ([_, data]: [string, any]) => data.progress > 0 && data.progress < 0.9
-        )
+        .filter(([_, data]: [string, any]) => data.progress > 0 && data.progress < 0.9)
         .map(([movieId, data]: [string, any]) => {
-          const movie = localMovies.find((m) => m.id.toString() === movieId);
-          return movie ? { ...movie, progress: data.progress } : null;
+          const movie = localMovies.find((m) => m.id.toString() === movieId)
+          return movie ? { ...movie, progress: data.progress } : null
         })
         .filter(Boolean)
-        .slice(0, 6);
+        .slice(0, 6)
 
-      setContinueWatching(continueList);
+      setContinueWatching(continueList)
     }
 
-    const watchedMovies = localStorage.getItem("recently-watched");
+    const watchedMovies = localStorage.getItem("recently-watched")
     if (watchedMovies) {
-      const recentlyWatched = JSON.parse(watchedMovies);
-      setWatchHistory(recentlyWatched.slice(0, 6));
+      const recentlyWatched = JSON.parse(watchedMovies)
+      setWatchHistory(recentlyWatched.slice(0, 6))
     }
-  }, []);
+  }, [])
 
   if (!authChecked) {
     return (
       <main className="flex items-center justify-center h-screen text-white bg-black">
         <p>Loading...</p>
       </main>
-    );
+    )
   }
 
-  if (!user) return null;
+  if (!user) return null
 
-  const favoriteMovies = localMovies
-    .filter((movie) => favorites.includes(Number(movie.id)))
-    .slice(0, 6);
-  const ratedMovies = localMovies
-    .filter((movie) => ratings[Number(movie.id)])
-    .slice(0, 6);
+  const favoriteMovies = localMovies.filter((movie) => favorites.includes(Number(movie.id))).slice(0, 6)
+  const ratedMovies = localMovies.filter((movie) => ratings[Number(movie.id)]).slice(0, 6)
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
@@ -119,12 +111,8 @@ export default function DashboardPage() {
               )}
             </div>
             <div className="flex-1 min-w-0">
-              <h1 className="text-2xl sm:text-3xl font-bold truncate">
-                {user.username || "User"}
-              </h1>
-              <p className="text-gray-400 text-sm sm:text-base truncate">
-                {user.email}
-              </p>
+              <h1 className="text-2xl sm:text-3xl font-bold truncate">{user.username || "User"}</h1>
+              <p className="text-gray-400 text-sm sm:text-base truncate">{user.email}</p>
               <div className="flex flex-wrap gap-3 sm:gap-4 mt-2 text-xs sm:text-sm">
                 <span className="flex items-center gap-1">
                   <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
@@ -161,15 +149,9 @@ export default function DashboardPage() {
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {continueWatching.map((movie) => (
                 <div key={movie.id} className="relative">
-                  <MovieCard
-                    movie={movie}
-                    onSelect={() => router.push(`/watch/${movie.id}`)}
-                  />
+                  <MovieCard movie={movie} onSelect={() => router.push(`/watch/${movie.id}`)} />
                   <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-700 rounded-b-lg">
-                    <div
-                      className="h-1 bg-red-600 rounded-b-lg"
-                      style={{ width: `${movie.progress * 100}%` }}
-                    />
+                    <div className="h-1 bg-red-600 rounded-b-lg" style={{ width: `${movie.progress * 100}%` }} />
                   </div>
                 </div>
               ))}
@@ -184,20 +166,14 @@ export default function DashboardPage() {
                 <Heart className="w-6 h-6 text-red-500" />
                 <h2 className="text-2xl font-semibold">My Favorites</h2>
               </div>
-              <Link
-                href="/favorites"
-                className="text-red-500 hover:text-red-400 text-sm"
-              >
+              <Link href="/favorites" className="text-red-500 hover:text-red-400 text-sm">
                 View All
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {favoriteMovies.map((movie) => (
                 <div key={movie.id} className="relative">
-                  <MovieCard
-                    movie={movie}
-                    onSelect={() => router.push(`/watch/${movie.id}`)}
-                  />
+                  <MovieCard movie={movie} onSelect={() => router.push(`/watch/${movie.id}`)} />
                 </div>
               ))}
             </div>
@@ -211,20 +187,14 @@ export default function DashboardPage() {
                 <Star className="w-6 h-6 text-yellow-500" />
                 <h2 className="text-2xl font-semibold">Recently Rated</h2>
               </div>
-              <Link
-                href="/ratings"
-                className="text-red-500 hover:text-red-400 text-sm"
-              >
+              <Link href="/ratings" className="text-red-500 hover:text-red-400 text-sm">
                 View All
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {ratedMovies.map((movie) => (
                 <div key={movie.id} className="relative">
-                  <MovieCard
-                    movie={movie}
-                    onSelect={() => router.push(`/watch/${movie.id}`)}
-                  />
+                  <MovieCard movie={movie} onSelect={() => router.push(`/watch/${movie.id}`)} />
                   <div className="absolute top-2 right-2 bg-black/70 rounded-full px-2 py-1 flex items-center gap-1">
                     <Star className="w-3 h-3 text-yellow-500 fill-current" />
                     <span className="text-xs">{ratings[Number(movie.id)]}</span>
@@ -242,52 +212,41 @@ export default function DashboardPage() {
                 <Clock className="w-6 h-6 text-blue-500" />
                 <h2 className="text-2xl font-semibold">Recently Watched</h2>
               </div>
-              <Link
-                href="/history"
-                className="text-red-500 hover:text-red-400 text-sm"
-              >
+              <Link href="/history" className="text-red-500 hover:text-red-400 text-sm">
                 View All
               </Link>
             </div>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {watchHistory.map((movie) => (
                 <div key={movie.id} className="relative">
-                  <MovieCard
-                    movie={movie}
-                    onSelect={() => router.push(`/watch/${movie.id}`)}
-                  />
+                  <MovieCard movie={movie} onSelect={() => router.push(`/watch/${movie.id}`)} />
                 </div>
               ))}
             </div>
           </section>
         )}
 
-        {favorites.length === 0 &&
-          Object.keys(ratings).length === 0 &&
-          continueWatching.length === 0 && (
-            <section className="py-16 text-center">
-              <div className="max-w-md mx-auto">
-                <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold mb-2">
-                  Welcome to Your Dashboard
-                </h3>
-                <p className="text-gray-400 mb-6">
-                  Start watching movies to see your favorites, ratings, and
-                  continue watching here.
-                </p>
-                <Link
-                  href="/"
-                  className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-                >
-                  <Play className="w-4 h-4" />
-                  Browse Movies
-                </Link>
-              </div>
-            </section>
-          )}
+        {favorites.length === 0 && Object.keys(ratings).length === 0 && continueWatching.length === 0 && (
+          <section className="py-16 text-center">
+            <div className="max-w-md mx-auto">
+              <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
+              <h3 className="text-xl font-semibold mb-2">Welcome to Your Dashboard</h3>
+              <p className="text-gray-400 mb-6">
+                Start watching movies to see your favorites, ratings, and continue watching here.
+              </p>
+              <Link
+                href="/"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                <Play className="w-4 h-4" />
+                Browse Movies
+              </Link>
+            </div>
+          </section>
+        )}
       </div>
 
       <Footer />
     </main>
-  );
+  )
 }

@@ -3,8 +3,21 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type ChangeEvent } from "react";
-import { Search, X, User, Menu, Home, Film, Tv, LogOut } from "lucide-react";
+import {
+  Search,
+  X,
+  User,
+  Menu,
+  Home,
+  Film,
+  Tv,
+  LogOut,
+  Sun,
+  Moon,
+  Bookmark,
+} from "lucide-react";
 import { movies } from "../moviesData";
+import { useTheme } from "../contexts/ThemeContext";
 
 export default function Navbar() {
   const router = useRouter();
@@ -12,6 +25,7 @@ export default function Navbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -39,6 +53,16 @@ export default function Navbar() {
     setQuery("");
     setSearchResults([]);
     router.push(`/watch/${movieId}`);
+  };
+
+  const handleAdvancedSearch = () => {
+    const searchQuery = query.trim();
+    setMobileSearchOpen(false);
+    setQuery("");
+    setSearchResults([]);
+    router.push(
+      `/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`
+    );
   };
 
   return (
@@ -82,6 +106,20 @@ export default function Navbar() {
               Series
             </Link>
             <Link
+              href="/search"
+              className="hover:text-red-400 transition flex items-center gap-1"
+            >
+              <Search className="w-4 h-4" />
+              Search
+            </Link>
+            <Link
+              href="/watchlist"
+              className="hover:text-red-400 transition flex items-center gap-1"
+            >
+              <Bookmark className="w-4 h-4" />
+              Watchlist
+            </Link>
+            <Link
               href="/dashboard"
               className="hover:text-red-400 transition flex items-center gap-1"
             >
@@ -89,6 +127,19 @@ export default function Navbar() {
               Dashboard
             </Link>
           </div>
+
+          {/* Theme toggle button for desktop */}
+          <button
+            onClick={toggleTheme}
+            className="hidden sm:flex items-center justify-center w-10 h-10 rounded-full bg-gray-800/50 hover:bg-gray-700/50 transition-colors"
+            title={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
+          >
+            {theme === "dark" ? (
+              <Sun className="w-5 h-5 text-yellow-400" />
+            ) : (
+              <Moon className="w-5 h-5 text-blue-400" />
+            )}
+          </button>
 
           {/* Auth actions */}
           <button
@@ -139,6 +190,22 @@ export default function Navbar() {
                 Series
               </Link>
               <Link
+                href="/search"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-lg hover:text-red-400 transition"
+              >
+                <Search className="w-5 h-5" />
+                Advanced Search
+              </Link>
+              <Link
+                href="/watchlist"
+                onClick={() => setMobileMenuOpen(false)}
+                className="flex items-center gap-3 text-lg hover:text-red-400 transition"
+              >
+                <Bookmark className="w-5 h-5" />
+                Watchlist
+              </Link>
+              <Link
                 href="/dashboard"
                 onClick={() => setMobileMenuOpen(false)}
                 className="flex items-center gap-3 text-lg hover:text-red-400 transition"
@@ -146,6 +213,23 @@ export default function Navbar() {
                 <User className="w-5 h-5" />
                 Dashboard
               </Link>
+              {/* Theme toggle for mobile menu */}
+              <button
+                onClick={toggleTheme}
+                className="flex items-center gap-3 text-lg hover:text-red-400 transition w-full text-left"
+              >
+                {theme === "dark" ? (
+                  <>
+                    <Sun className="w-5 h-5" />
+                    Light Mode
+                  </>
+                ) : (
+                  <>
+                    <Moon className="w-5 h-5" />
+                    Dark Mode
+                  </>
+                )}
+              </button>
             </nav>
 
             <div className="mt-8 pt-6 border-t border-gray-800">
@@ -189,6 +273,7 @@ export default function Navbar() {
               onChange={(e: ChangeEvent<HTMLInputElement>) =>
                 handleSearch(e.target.value)
               }
+              onKeyDown={(e) => e.key === "Enter" && handleAdvancedSearch()}
               className="w-full px-4 py-3 rounded-lg bg-gray-800 text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-red-500 border border-gray-700"
             />
           </div>
@@ -218,17 +303,39 @@ export default function Navbar() {
                     </div>
                   </div>
                 ))}
+                <div className="border-t border-gray-700 mt-4 pt-4">
+                  <button
+                    onClick={handleAdvancedSearch}
+                    className="w-full p-3 text-center text-red-400 hover:text-red-300 transition-colors bg-gray-800/30 rounded-lg"
+                  >
+                    View all results in Advanced Search
+                  </button>
+                </div>
               </div>
             ) : query.trim() ? (
               <div className="text-center py-8">
-                <p className="text-gray-400">No movies found for "{query}"</p>
+                <p className="text-gray-400 mb-4">
+                  No movies found for "{query}"
+                </p>
+                <button
+                  onClick={handleAdvancedSearch}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Try Advanced Search
+                </button>
               </div>
             ) : (
               <div className="text-center py-8">
                 <Search className="w-12 h-12 text-gray-600 mx-auto mb-3" />
-                <p className="text-gray-400">
+                <p className="text-gray-400 mb-4">
                   Start typing to search movies...
                 </p>
+                <button
+                  onClick={handleAdvancedSearch}
+                  className="text-red-400 hover:text-red-300 transition-colors"
+                >
+                  Go to Advanced Search
+                </button>
               </div>
             )}
           </div>

@@ -1,8 +1,12 @@
 "use client";
 
+import type React from "react";
+
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useWatchlist } from "@/app/hooks/useWatchlist";
+import { Bookmark, BookmarkCheck } from "lucide-react";
 
 export default function MovieCard({
   movie,
@@ -12,6 +16,8 @@ export default function MovieCard({
   onSelect: (m: any) => void;
 }) {
   const [progress, setProgress] = useState<number>(0);
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist, loading } =
+    useWatchlist();
 
   useEffect(() => {
     const savedProgress = localStorage.getItem("watch-progress");
@@ -25,6 +31,16 @@ export default function MovieCard({
 
   const handleClick = () => {
     onSelect(movie);
+  };
+
+  const handleWatchlistToggle = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent movie selection when clicking watchlist button
+
+    if (isInWatchlist(movie.id)) {
+      removeFromWatchlist(movie.id, movie.title);
+    } else {
+      addToWatchlist(movie.id, movie.title);
+    }
   };
 
   async function handleRequest() {
@@ -103,6 +119,24 @@ export default function MovieCard({
           <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">
             {movie.year}
           </span>
+          <button
+            onClick={handleWatchlistToggle}
+            disabled={loading}
+            className="bg-black/70 hover:bg-black/90 text-white p-1.5 rounded-full 
+                       transition-all duration-200 opacity-0 group-hover:opacity-100
+                       hover:scale-110 disabled:opacity-50 ml-2"
+            title={
+              isInWatchlist(movie.id)
+                ? "Remove from Watchlist"
+                : "Add to Watchlist"
+            }
+          >
+            {isInWatchlist(movie.id) ? (
+              <BookmarkCheck size={14} className="text-red-500" />
+            ) : (
+              <Bookmark size={14} />
+            )}
+          </button>
         </div>
       )}
 

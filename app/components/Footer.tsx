@@ -1,6 +1,6 @@
-import { FaFacebook, FaInstagram } from "react-icons/fa";
-import { SiKick } from "react-icons/si";
-import Link from "next/link";
+import { FaFacebook, FaInstagram } from "react-icons/fa"
+import { SiKick } from "react-icons/si"
+import Link from "next/link"
 
 export default function Footer() {
   return (
@@ -11,8 +11,8 @@ export default function Footer() {
           <div className="md:col-span-1">
             <h2 className="text-2xl font-bold text-red-600 mb-4">JoyFlix</h2>
             <p className="text-gray-400 text-sm leading-relaxed">
-              Your ultimate destination for streaming the best movies and
-              series. Discover, watch, and enjoy unlimited entertainment.
+              Your ultimate destination for streaming the best movies and series. Discover, watch, and enjoy unlimited
+              entertainment.
             </p>
           </div>
 
@@ -36,10 +36,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link
-                  href="/dashboard"
-                  className="hover:text-red-400 transition"
-                >
+                <Link href="/dashboard" className="hover:text-red-400 transition">
                   My Dashboard
                 </Link>
               </li>
@@ -51,24 +48,16 @@ export default function Footer() {
             <h3 className="text-white font-semibold mb-4">Categories</h3>
             <ul className="space-y-2 text-sm">
               <li>
-                <span className="hover:text-red-400 transition cursor-pointer">
-                  Action
-                </span>
+                <span className="hover:text-red-400 transition cursor-pointer">Action</span>
               </li>
               <li>
-                <span className="hover:text-red-400 transition cursor-pointer">
-                  Comedy
-                </span>
+                <span className="hover:text-red-400 transition cursor-pointer">Comedy</span>
               </li>
               <li>
-                <span className="hover:text-red-400 transition cursor-pointer">
-                  Drama
-                </span>
+                <span className="hover:text-red-400 transition cursor-pointer">Drama</span>
               </li>
               <li>
-                <span className="hover:text-red-400 transition cursor-pointer">
-                  Thriller
-                </span>
+                <span className="hover:text-red-400 transition cursor-pointer">Thriller</span>
               </li>
             </ul>
           </div>
@@ -77,8 +66,7 @@ export default function Footer() {
           <div>
             <h3 className="text-white font-semibold mb-4">Connect</h3>
             <p className="text-sm text-gray-400 mb-4">
-              Developed by{" "}
-              <span className="text-red-400 font-medium">Aljoy.DEV</span>
+              Developed by <span className="text-red-400 font-medium">Aljoy.DEV</span>
             </p>
             <div className="flex gap-4">
               <a
@@ -115,22 +103,15 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="border-t border-gray-800 pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
           <p className="text-gray-500 text-sm">
-            © {new Date().getFullYear()} JoyFlix by Tanoshii. All rights
-            reserved.
+            © {new Date().getFullYear()} JoyFlix by Tanoshii. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm">
-            <span className="hover:text-red-400 transition cursor-pointer">
-              Privacy Policy
-            </span>
-            <span className="hover:text-red-400 transition cursor-pointer">
-              Terms of Service
-            </span>
-            <span className="hover:text-red-400 transition cursor-pointer">
-              Contact
-            </span>
+            <span className="hover:text-red-400 transition cursor-pointer">Privacy Policy</span>
+            <span className="hover:text-red-400 transition cursor-pointer">Terms of Service</span>
+            <span className="hover:text-red-400 transition cursor-pointer">Contact</span>
           </div>
         </div>
       </div>
     </footer>
-  );
+  )
 }
