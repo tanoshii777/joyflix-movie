@@ -1,46 +1,46 @@
-"use client";
+"use client"
 
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { useFavorites } from "@/app/hooks/useFavorites";
-import { useRatings } from "@/app/hooks/useRatings";
-import { useEffect, useState } from "react";
-import { toast } from "sonner"; // ✅ Sonner for notifications
+import { useRouter } from "next/navigation"
+import Image from "next/image"
+import { useFavorites } from "@/app/hooks/useFavorites"
+import { useRatings } from "@/app/hooks/useRatings"
+import { useEffect, useState } from "react"
+import { toast } from "sonner" // ✅ Sonner for notifications
 
 export default function QuickViewModal({
   movie,
   onClose,
 }: {
-  movie: any;
-  onClose: () => void;
+  movie: any
+  onClose: () => void
 }) {
-  const router = useRouter();
-  const { favorites, toggleFavorite } = useFavorites();
-  const { ratings, rateMovie } = useRatings();
+  const router = useRouter()
+  const { favorites, toggleFavorite } = useFavorites()
+  const { ratings, rateMovie } = useRatings()
 
-  const [progressTime, setProgressTime] = useState<number | null>(null);
-  const [duration, setDuration] = useState<number | null>(null);
+  const [progressTime, setProgressTime] = useState<number | null>(null)
+  const [duration, setDuration] = useState<number | null>(null)
 
   // 🔹 Load watch progress (time + duration) from localStorage
   useEffect(() => {
-    if (!movie) return;
-    const saved = localStorage.getItem(`progress-${movie.id}`);
+    if (!movie) return
+    const saved = localStorage.getItem(`progress-${movie.id}`)
     if (saved) {
-      const { time, duration } = JSON.parse(saved);
+      const { time, duration } = JSON.parse(saved)
       if (time > 0 && duration) {
-        setProgressTime(time);
-        setDuration(duration);
+        setProgressTime(time)
+        setDuration(duration)
       }
     }
-  }, [movie]);
+  }, [movie])
 
-  if (!movie) return null;
+  if (!movie) return null
 
   const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = Math.floor(seconds % 60);
-    return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+    const mins = Math.floor(seconds / 60)
+    const secs = Math.floor(seconds % 60)
+    return `${mins}:${secs.toString().padStart(2, "0")}`
+  }
 
   // 🔹 Handle movie request
   async function handleRequest() {
@@ -54,25 +54,24 @@ export default function QuickViewModal({
           year: movie.year,
           user: "guest",
         }),
-      });
+      })
 
-      const data = await res.json();
+      const data = await res.json()
 
       if (res.ok) {
         toast("🎬 Request Sent", {
           description: `${movie.title} has been requested successfully.`,
-        });
+        })
       } else {
         toast("❌ Error", {
-          description:
-            data.error || "Something went wrong while sending your request.",
-        });
+          description: data.error || "Something went wrong while sending your request.",
+        })
       }
     } catch (err) {
-      console.error("[v0] Network error requesting movie:", err);
+      console.error("[v0] Network error requesting movie:", err)
       toast("⚠️ Network Error", {
         description: "Failed to connect to server. Try again later.",
-      });
+      })
     }
   }
 
@@ -80,21 +79,13 @@ export default function QuickViewModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
       <div className="bg-white/10 backdrop-blur-lg border border-white/20 rounded-xl shadow-xl max-w-lg w-full p-6 relative">
         {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-400 hover:text-white"
-        >
+        <button onClick={onClose} className="absolute top-3 right-3 text-gray-400 hover:text-white">
           ✕
         </button>
 
         {/* Poster */}
         <div className="aspect-video relative rounded-lg overflow-hidden mb-4">
-          <Image
-            src={movie.thumbnail || "/placeholder.svg"}
-            alt={movie.title}
-            fill
-            className="object-cover"
-          />
+          <Image src={movie.thumbnail || "/placeholder.svg"} alt={movie.title} fill className="object-cover" />
         </div>
 
         {/* Title + Info */}
@@ -110,11 +101,7 @@ export default function QuickViewModal({
             <button
               key={star}
               onClick={() => rateMovie(movie.id, star)}
-              className={
-                star <= (ratings[movie.id] || 0)
-                  ? "text-yellow-400"
-                  : "text-gray-400"
-              }
+              className={star <= (ratings[movie.id] || 0) ? "text-yellow-400" : "text-gray-400"}
             >
               ⭐
             </button>
@@ -138,9 +125,7 @@ export default function QuickViewModal({
             <button
               onClick={() => toggleFavorite(movie.id)}
               className={`flex-1 py-2 rounded-lg font-semibold transition ${
-                favorites.includes(movie.id)
-                  ? "bg-red-600 hover:bg-red-700"
-                  : "bg-gray-700 hover:bg-gray-600"
+                favorites.includes(movie.id) ? "bg-red-600 hover:bg-red-700" : "bg-gray-700 hover:bg-gray-600"
               }`}
             >
               ❤️ {favorites.includes(movie.id) ? "Remove" : "Add to List"}
@@ -150,8 +135,8 @@ export default function QuickViewModal({
             {progressTime && duration ? (
               <button
                 onClick={() => {
-                  onClose();
-                  router.push(`/watch/${movie.id}?resume=true`);
+                  onClose()
+                  router.push(`/watch/${movie.id}?resume=true`)
                 }}
                 className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
               >
@@ -160,8 +145,8 @@ export default function QuickViewModal({
             ) : (
               <button
                 onClick={() => {
-                  onClose();
-                  router.push(`/watch/${movie.id}`);
+                  onClose()
+                  router.push(`/watch/${movie.id}`)
                 }}
                 className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
               >
@@ -182,5 +167,5 @@ export default function QuickViewModal({
         </div>
       </div>
     </div>
-  );
+  )
 }

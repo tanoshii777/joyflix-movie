@@ -1,47 +1,46 @@
-"use client";
+"use client"
 
-import type React from "react";
+import type React from "react"
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { toast } from "sonner";
-import { useWatchlist } from "@/app/hooks/useWatchlist";
-import { Bookmark, BookmarkCheck } from "lucide-react";
+import { useEffect, useState } from "react"
+import Image from "next/image"
+import { toast } from "sonner"
+import { useWatchlist } from "@/app/hooks/useWatchlist"
+import { Bookmark, BookmarkCheck } from "lucide-react"
 
 export default function MovieCard({
   movie,
   onSelect,
 }: {
-  movie: any;
-  onSelect: (m: any) => void;
+  movie: any
+  onSelect: (m: any) => void
 }) {
-  const [progress, setProgress] = useState<number>(0);
-  const { addToWatchlist, removeFromWatchlist, isInWatchlist, loading } =
-    useWatchlist();
+  const [progress, setProgress] = useState<number>(0)
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist, loading } = useWatchlist()
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem("watch-progress");
+    const savedProgress = localStorage.getItem("watch-progress")
     if (savedProgress) {
-      const data = JSON.parse(savedProgress);
+      const data = JSON.parse(savedProgress)
       if (data[movie.id]) {
-        setProgress(data[movie.id].progress || 0);
+        setProgress(data[movie.id].progress || 0)
       }
     }
-  }, [movie.id]);
+  }, [movie.id])
 
   const handleClick = () => {
-    onSelect(movie);
-  };
+    onSelect(movie)
+  }
 
   const handleWatchlistToggle = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent movie selection when clicking watchlist button
+    e.stopPropagation() // Prevent movie selection when clicking watchlist button
 
     if (isInWatchlist(movie.id)) {
-      removeFromWatchlist(movie.id, movie.title);
+      removeFromWatchlist(movie.id, movie.title)
     } else {
-      addToWatchlist(movie.id, movie.title);
+      addToWatchlist(movie.id, movie.title)
     }
-  };
+  }
 
   async function handleRequest() {
     try {
@@ -54,21 +53,21 @@ export default function MovieCard({
           year: movie.year,
           user: "guest",
         }),
-      });
+      })
 
       if (res.ok) {
         toast(`🎬 Request sent`, {
           description: `${movie.title} has been requested successfully.`,
-        });
+        })
       } else {
         toast(`❌ Error`, {
           description: "Something went wrong while sending your request.",
-        });
+        })
       }
     } catch (err) {
       toast(`⚠️ Network Error`, {
         description: "Failed to connect to server. Try again later.",
-      });
+      })
     }
   }
 
@@ -109,18 +108,14 @@ export default function MovieCard({
       </div>
 
       <div className="absolute top-2 left-2">
-        <span className="bg-red-600/90 text-white text-xs px-2 py-1 rounded-full font-medium">
-          {movie.category}
-        </span>
+        <span className="bg-red-600/90 text-white text-xs px-2 py-1 rounded-full font-medium">{movie.category}</span>
       </div>
 
       {movie.year && (
         <>
           <div className="absolute top-2 right-2 hidden md:flex items-center">
             {/* Year badge */}
-            <span className="text-white text-xs px-2 py-1 rounded-full bg-black/60">
-              {movie.year}
-            </span>
+            <span className="text-white text-xs px-2 py-1 rounded-full bg-black/60">{movie.year}</span>
 
             {/* Watchlist button */}
             <button
@@ -131,17 +126,10 @@ export default function MovieCard({
           transition-all duration-200 hover:scale-110 disabled:opacity-50
           p-1.5 md:p-2
         "
-              title={
-                isInWatchlist(movie.id)
-                  ? "Remove from Watchlist"
-                  : "Add to Watchlist"
-              }
+              title={isInWatchlist(movie.id) ? "Remove from Watchlist" : "Add to Watchlist"}
             >
               {isInWatchlist(movie.id) ? (
-                <BookmarkCheck
-                  size={14}
-                  className="text-red-500 md:w-5 md:h-5"
-                />
+                <BookmarkCheck size={14} className="text-red-500 md:w-5 md:h-5" />
               ) : (
                 <Bookmark size={14} className="md:w-5 md:h-5" />
               )}
@@ -149,9 +137,7 @@ export default function MovieCard({
           </div>
 
           <div className="absolute top-2 right-2 md:hidden">
-            <span className="text-white text-xs px-2 py-1 rounded-full bg-black/50">
-              {movie.year}
-            </span>
+            <span className="text-white text-xs px-2 py-1 rounded-full bg-black/50">{movie.year}</span>
           </div>
 
           <div className="absolute bottom-2 right-2 flex md:hidden">
@@ -163,17 +149,9 @@ export default function MovieCard({
           transition-all duration-200 hover:scale-110 disabled:opacity-50
           p-2
         "
-              title={
-                isInWatchlist(movie.id)
-                  ? "Remove from Watchlist"
-                  : "Add to Watchlist"
-              }
+              title={isInWatchlist(movie.id) ? "Remove from Watchlist" : "Add to Watchlist"}
             >
-              {isInWatchlist(movie.id) ? (
-                <BookmarkCheck size={16} className="text-red-500" />
-              ) : (
-                <Bookmark size={16} />
-              )}
+              {isInWatchlist(movie.id) ? <BookmarkCheck size={16} className="text-red-500" /> : <Bookmark size={16} />}
             </button>
           </div>
         </>
@@ -182,12 +160,9 @@ export default function MovieCard({
       {/* Progress bar */}
       {progress > 0 && (
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
-          <div
-            className="h-1 bg-red-600"
-            style={{ width: `${progress * 100}%` }}
-          />
+          <div className="h-1 bg-red-600" style={{ width: `${progress * 100}%` }} />
         </div>
       )}
     </div>
-  );
+  )
 }

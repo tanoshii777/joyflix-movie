@@ -1,12 +1,15 @@
 {
-  "name": "JoyFlix - Movie Streaming Platform",
-  "short_name": "JoyFlix",
-  "description": "Stream your favorite movies and TV shows with JoyFlix",
+  "name": "JOYFLIX - Movie Streaming Platform",
+  "short_name": "JOYFLIX",
+  "description": "Stream your favorite movies and TV shows with JOYFLIX",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#1f2937",
+  "background_color": "#0f172a",
   "theme_color": "#be123c",
   "orientation": "portrait-primary",
+  "categories": ["entertainment", "movies", "streaming"],
+  "lang": "en",
+  "dir": "ltr",
   "icons": [
     {
       "src": "/icon-192x192.png",
@@ -19,9 +22,13 @@
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "maskable any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
     }
   ],
-  "categories": ["entertainment", "multimedia"],
   "screenshots": [
     {
       "src": "/screenshot-wide.png",
@@ -31,7 +38,7 @@
     },
     {
       "src": "/screenshot-narrow.png",
-      "sizes": "750x1334",
+      "sizes": "390x844",
       "type": "image/png",
       "form_factor": "narrow"
     }
