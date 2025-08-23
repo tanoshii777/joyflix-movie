@@ -1,27 +1,27 @@
-"use client"
+"use client";
 
-import { useParams } from "next/navigation"
-import { movies } from "@/app/moviesData"
-import Link from "next/link"
-import Image from "next/image"
-import { useRef, useEffect } from "react"
-import { toast } from "sonner"
+import { useParams } from "next/navigation";
+import { movies } from "@/app/moviesData";
+import Link from "next/link";
+import Image from "next/image";
+import { useRef, useEffect } from "react";
+import { toast } from "sonner";
 
 export default function WatchMovie() {
-  const params = useParams()
-  const movieId = Number((params as any).id)
+  const params = useParams();
+  const movieId = Number((params as any).id);
 
-  const movie = movies.find((m) => m.id === movieId)
-  const videoRef = useRef<HTMLVideoElement>(null)
+  const movie = movies.find((m) => m.id === movieId);
+  const videoRef = useRef<HTMLVideoElement>(null);
 
   // Restore saved progress
   useEffect(() => {
-    const saved = localStorage.getItem(`progress-${movieId}`)
+    const saved = localStorage.getItem(`progress-${movieId}`);
     if (saved && videoRef.current) {
-      const { time } = JSON.parse(saved)
-      videoRef.current.currentTime = time
+      const { time } = JSON.parse(saved);
+      videoRef.current.currentTime = time;
     }
-  }, [movieId])
+  }, [movieId]);
 
   // Save progress
   const handleTimeUpdate = () => {
@@ -29,37 +29,37 @@ export default function WatchMovie() {
       const progress = {
         time: videoRef.current.currentTime,
         duration: videoRef.current.duration,
-      }
-      localStorage.setItem(`progress-${movieId}`, JSON.stringify(progress))
+      };
+      localStorage.setItem(`progress-${movieId}`, JSON.stringify(progress));
     }
-  }
+  };
 
   // Clear when finished
   const handleEnded = () => {
-    localStorage.removeItem(`progress-${movieId}`)
-  }
+    localStorage.removeItem(`progress-${movieId}`);
+  };
 
   if (!movie) {
     return (
       <main className="min-h-screen flex items-center justify-center text-white bg-black">
         <p>Movie not found.</p>
       </main>
-    )
+    );
   }
 
   const handlePlayNow = async () => {
-    if (!videoRef.current) return
+    if (!videoRef.current) return;
     try {
-      await videoRef.current.play()
+      await videoRef.current.play();
       if (videoRef.current.requestFullscreen) {
-        await videoRef.current.requestFullscreen()
+        await videoRef.current.requestFullscreen();
       } else if ((videoRef.current as any).webkitEnterFullscreen) {
-        ;(videoRef.current as any).webkitEnterFullscreen()
+        (videoRef.current as any).webkitEnterFullscreen();
       }
     } catch (e) {
-      console.error("Autoplay failed:", e)
+      console.error("Autoplay failed:", e);
     }
-  }
+  };
 
   const handleRequestMovie = async () => {
     try {
@@ -72,28 +72,31 @@ export default function WatchMovie() {
           year: movie.year,
           user: "guest",
         }),
-      })
+      });
 
       if (res.ok) {
         toast("🎬 Request Sent", {
           description: `${movie.title} has been requested successfully.`,
-        })
+        });
       } else {
         toast("❌ Error", {
           description: "Something went wrong while sending your request.",
-        })
+        });
       }
     } catch (err) {
       toast("⚠️ Network Error", {
         description: "Failed to connect to server. Try again later.",
-      })
+      });
     }
-  }
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <header className="flex justify-between items-center px-8 py-6">
-        <Link href="/" className="text-red-500 font-bold text-xl hover:text-red-400">
+        <Link
+          href="/"
+          className="text-red-500 font-bold text-xl hover:text-red-400"
+        >
           ← Back
         </Link>
         <h1 className="text-2xl font-bold">🎬 JoyFlix</h1>
@@ -143,10 +146,18 @@ export default function WatchMovie() {
           onEnded={handleEnded}
         >
           <source src={movie.video} type="video/mp4" />
-          {movie.subtitle && <track src={movie.subtitle} kind="subtitles" srcLang="en" label="English" default />}
+          {movie.subtitle && (
+            <track
+              src={movie.subtitle}
+              kind="subtitles"
+              srcLang="en"
+              label="English"
+              default
+            />
+          )}
           Your browser does not support the video tag.
         </video>
       </section>
     </main>
-  )
+  );
 }
