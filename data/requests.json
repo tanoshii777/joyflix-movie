@@ -31,5 +31,14 @@
     "user": "guest",
     "status": "approved",
     "createdAt": "2025-08-23T09:24:18.918Z"
+  },
+  {
+    "id": 1755944321020,
+    "movieId": "tmdb-1078605",
+    "title": "Weapons",
+    "year": 2025,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-23T10:18:41.020Z"
   }
 ]
