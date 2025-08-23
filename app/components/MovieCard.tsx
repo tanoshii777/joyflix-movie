@@ -79,10 +79,22 @@ export default function MovieCard({
         />
       </div>
 
-      {/* Dark overlay on hover */}
-      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
-        {/* Play icon in the center */}
-        <Play className="w-12 h-12 text-white opacity-90" />
+      <div className="absolute inset-0 flex items-center justify-center">
+        {/* Glassy Circle with Play Button */}
+        <div
+          className="w-18 h-18 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center 
+               shadow-lg border-2 border-white 
+               opacity-0 scale-90 transition-all duration-500 ease-in-out
+               group-hover:opacity-100 group-hover:scale-110 
+               group-hover:border-red-600 group-hover:shadow-white-500/50"
+        >
+          {/* Red Play Triangle */}
+          <div
+            className="w-0 h-0 border-l-[24px] border-l-red-600 border-y-[14px] border-y-transparent 
+                 opacity-0 transition-all duration-500 ease-in-out
+                 group-hover:opacity-100 group-hover:border-l-red"
+          ></div>
+        </div>
       </div>
 
       {/* Title & views */}

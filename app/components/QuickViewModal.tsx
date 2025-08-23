@@ -102,7 +102,7 @@ export default function QuickViewModal({
 
         {/* Rating System */}
         <div className="flex gap-1 mb-4">
-          {[1, 2, 3, 4, 5].map((star) => (
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((star) => (
             <button
               key={star}
               onClick={() => rateMovie(movie.id, star)}
@@ -121,7 +121,7 @@ export default function QuickViewModal({
         {progressTime && duration && (
           <div className="w-full bg-gray-700 rounded-full h-2 mb-4 overflow-hidden">
             <div
-              className="bg-red-600 h-2 transition-all duration-500"
+              className="h-2 transition-all duration-500 bg-gradient-to-r from-pink-500 via-red-500 to-yellow-500"
               style={{ width: `${(progressTime / duration) * 100}%` }}
             ></div>
           </div>
