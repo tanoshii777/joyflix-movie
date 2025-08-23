@@ -1,29 +1,5 @@
 [
   {
-    "id": 1755922298592,
-    "movieId": 1,
-    "title": "Nobody - 2021",
-    "user": "guest",
-    "status": "approved",
-    "createdAt": "2025-08-23T04:11:38.592Z"
-  },
-  {
-    "id": 1755937906623,
-    "movieId": "tmdb-575265",
-    "title": "Mission: Impossible - The Final Reckoning",
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-23T08:31:46.623Z"
-  },
-  {
-    "id": 1755937929189,
-    "movieId": "tmdb-1234821",
-    "title": "Jurassic World Rebirth",
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-23T08:32:09.189Z"
-  },
-  {
     "id": 1755941058918,
     "movieId": "tmdb-1311031",
     "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
@@ -49,5 +25,23 @@
     "user": "guest",
     "status": "pending",
     "createdAt": "2025-08-23T14:54:25.047Z"
+  },
+  {
+    "id": 1755963931384,
+    "movieId": "tmdb-1061474",
+    "title": "Superman",
+    "year": 2025,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-23T15:45:31.384Z"
+  },
+  {
+    "id": 1755963969126,
+    "movieId": "tmdb-1312946",
+    "title": "The Map That Leads to You",
+    "year": 2025,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-23T15:46:09.126Z"
   }
 ]

@@ -116,7 +116,6 @@ export default function MovieCard({
 
       {movie.year && (
         <>
-          {/* Desktop setup (top-right) */}
           <div className="absolute top-2 right-2 hidden md:flex items-center">
             {/* Year badge */}
             <span className="text-white text-xs px-2 py-1 rounded-full bg-black/60">
@@ -149,14 +148,12 @@ export default function MovieCard({
             </button>
           </div>
 
-          {/* Mobile year (top-left or top-right, your choice) */}
           <div className="absolute top-2 right-2 md:hidden">
             <span className="text-white text-xs px-2 py-1 rounded-full bg-black/50">
               {movie.year}
             </span>
           </div>
 
-          {/* Mobile watchlist button (bottom-right) */}
           <div className="absolute bottom-2 right-2 flex md:hidden">
             <button
               onClick={handleWatchlistToggle}

@@ -4,7 +4,7 @@ import type { Movie } from "./types/movie";
 export const movies: Movie[] = [
   {
     id: 1,
-    title: "Nobody - 2021",
+    title: "Nobody",
     year: 2021,
     thumbnail: "/posters/nobody-poster.png",
     video: "/movies/Nobody.mp4",
@@ -148,7 +148,7 @@ export const movies: Movie[] = [
   },
   {
     id: 13,
-    title: "Ballerina 2025",
+    title: "Ballerina",
     year: 2025,
     thumbnail: "/posters/Ballerina.png",
     video: "/movies/Ballerina 2025.mkv",
@@ -338,5 +338,17 @@ export const movies: Movie[] = [
     subtitle: "/subtitles/f1 the movie.vtt",
     description:
       "A Formula One driver comes out of retirement to mentor and team up with a younger driver.",
+  },
+  {
+    id: 31,
+    title: "WALL-E",
+    year: 2008,
+    thumbnail: "/posters/wall e.png",
+    video: "/movies/WALL E.mp4",
+    startTime: 120,
+    category: "Animation",
+    subtitle: "/subtitles/wall e.vtt",
+    description:
+      "A robot who is responsible for cleaning a waste-covered Earth meets another robot and falls in love with her. Together, they set out on a journey that will alter the fate of mankind.",
   },
 ];

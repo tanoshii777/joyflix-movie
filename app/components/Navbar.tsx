@@ -1,8 +1,10 @@
 "use client";
 
+import type React from "react";
+
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState, type ChangeEvent } from "react";
+import { useState, useEffect, useRef, type ChangeEvent } from "react";
 import {
   Search,
   X,
@@ -25,11 +27,27 @@ export default function Navbar() {
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [desktopSearchOpen, setDesktopSearchOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const desktopSearchRef = useRef<HTMLDivElement>(null);
 
-  const handleLogout = () => {
-    localStorage.removeItem("token");
-    router.push("/login");
+  const handleLogout = async () => {
+    try {
+      // Call logout API to clear HTTP-only cookies
+      await fetch("/api/auth/logout", {
+        method: "POST",
+        credentials: "include", // Include cookies in request
+      });
+    } catch (error) {
+      console.error("Logout API call failed:", error);
+    } finally {
+      // Clear localStorage regardless of API call success
+      localStorage.removeItem("token");
+      localStorage.removeItem("auth");
+      localStorage.removeItem("user");
+      // Redirect to login page
+      router.push("/login");
+    }
   };
 
   const handleSearch = (searchQuery: string) => {
@@ -50,6 +68,7 @@ export default function Navbar() {
 
   const handleMovieSelect = (movieId: number) => {
     setMobileSearchOpen(false);
+    setDesktopSearchOpen(false);
     setQuery("");
     setSearchResults([]);
     router.push(`/watch/${movieId}`);
@@ -58,12 +77,55 @@ export default function Navbar() {
   const handleAdvancedSearch = () => {
     const searchQuery = query.trim();
     setMobileSearchOpen(false);
+    setDesktopSearchOpen(false);
     setQuery("");
     setSearchResults([]);
     router.push(
       `/search${searchQuery ? `?q=${encodeURIComponent(searchQuery)}` : ""}`
     );
   };
+
+  const handleDesktopSearchToggle = (e: React.MouseEvent) => {
+    e.preventDefault();
+    setDesktopSearchOpen(!desktopSearchOpen);
+    if (!desktopSearchOpen) {
+      setTimeout(() => {
+        const input = desktopSearchRef.current?.querySelector("input");
+        input?.focus();
+      }, 100);
+    }
+  };
+
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setDesktopSearchOpen(false);
+        setQuery("");
+        setSearchResults([]);
+      }
+    };
+
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        desktopSearchRef.current &&
+        !desktopSearchRef.current.contains(event.target as Node)
+      ) {
+        setDesktopSearchOpen(false);
+        setQuery("");
+        setSearchResults([]);
+      }
+    };
+
+    if (desktopSearchOpen) {
+      document.addEventListener("keydown", handleKeyDown);
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [desktopSearchOpen]);
 
   return (
     <>
@@ -95,7 +157,7 @@ export default function Navbar() {
           </div>
 
           {/* Desktop Links */}
-          <div className="hidden sm:flex gap-6">
+          <div className="hidden sm:flex gap-6 relative">
             <Link href="/" className="hover:text-red-400 transition">
               Home
             </Link>
@@ -105,13 +167,13 @@ export default function Navbar() {
             <Link href="/series" className="hover:text-red-400 transition">
               Series
             </Link>
-            <Link
-              href="/search"
+            <button
+              onClick={handleDesktopSearchToggle}
               className="hover:text-red-400 transition flex items-center gap-1"
             >
               <Search className="w-4 h-4" />
               Search
-            </Link>
+            </button>
             <Link
               href="/watchlist"
               className="hover:text-red-400 transition flex items-center gap-1"
@@ -126,6 +188,99 @@ export default function Navbar() {
               <User className="w-4 h-4" />
               Dashboard
             </Link>
+
+            {/* Desktop Search Dropdown */}
+            {desktopSearchOpen && (
+              <div
+                ref={desktopSearchRef}
+                className="absolute top-full right-0 mt-2 w-96 bg-black/95 backdrop-blur-md rounded-lg shadow-xl border border-gray-800 p-4 z-[60]"
+              >
+                <div className="flex items-center gap-2 mb-3">
+                  <Search className="w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search movies..."
+                    value={query}
+                    onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                      handleSearch(e.target.value)
+                    }
+                    onKeyDown={(e) =>
+                      e.key === "Enter" && handleAdvancedSearch()
+                    }
+                    className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none"
+                  />
+                  <button
+                    onClick={() => {
+                      setDesktopSearchOpen(false);
+                      setQuery("");
+                      setSearchResults([]);
+                    }}
+                    className="text-gray-400 hover:text-red-400"
+                  >
+                    <X size={16} />
+                  </button>
+                </div>
+
+                {/* Search Results */}
+                {searchResults.length > 0 ? (
+                  <div className="space-y-2 max-h-64 overflow-y-auto">
+                    {searchResults.map((movie) => (
+                      <div
+                        key={movie.id}
+                        onClick={() => handleMovieSelect(movie.id)}
+                        className="flex items-center gap-3 p-2 bg-gray-800/50 rounded-lg hover:bg-gray-700/50 cursor-pointer transition-colors"
+                      >
+                        <img
+                          src={movie.thumbnail || "/placeholder.svg"}
+                          alt={movie.title}
+                          className="w-10 h-14 object-cover rounded"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-white truncate text-sm">
+                            {movie.title}
+                          </h3>
+                          <p className="text-xs text-gray-400">
+                            {movie.year} • {movie.category}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                    <div className="border-t border-gray-700 mt-2 pt-2">
+                      <button
+                        onClick={handleAdvancedSearch}
+                        className="w-full p-2 text-center text-red-400 hover:text-red-300 transition-colors text-sm"
+                      >
+                        View all results in Advanced Search
+                      </button>
+                    </div>
+                  </div>
+                ) : query.trim() ? (
+                  <div className="text-center py-4">
+                    <p className="text-gray-400 text-sm mb-2">
+                      No movies found for "{query}"
+                    </p>
+                    <button
+                      onClick={handleAdvancedSearch}
+                      className="text-red-400 hover:text-red-300 transition-colors text-sm"
+                    >
+                      Try Advanced Search
+                    </button>
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-400 text-sm mb-2">
+                      Start typing to search movies...
+                    </p>
+                    <button
+                      onClick={handleAdvancedSearch}
+                      className="text-red-400 hover:text-red-300 transition-colors text-sm"
+                    >
+                      Go to Advanced Search
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Theme toggle button for desktop */}

@@ -56,16 +56,20 @@ export default function QuickViewModal({
         }),
       });
 
+      const data = await res.json();
+
       if (res.ok) {
         toast("🎬 Request Sent", {
           description: `${movie.title} has been requested successfully.`,
         });
       } else {
         toast("❌ Error", {
-          description: "Something went wrong while sending your request.",
+          description:
+            data.error || "Something went wrong while sending your request.",
         });
       }
     } catch (err) {
+      console.error("[v0] Network error requesting movie:", err);
       toast("⚠️ Network Error", {
         description: "Failed to connect to server. Try again later.",
       });
@@ -86,7 +90,7 @@ export default function QuickViewModal({
         {/* Poster */}
         <div className="aspect-video relative rounded-lg overflow-hidden mb-4">
           <Image
-            src={movie.thumbnail}
+            src={movie.thumbnail || "/placeholder.svg"}
             alt={movie.title}
             fill
             className="object-cover"
