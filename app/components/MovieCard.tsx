@@ -1,31 +1,31 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
-import Image from "next/image"
-import { toast } from "sonner"
+import { useEffect, useState } from "react";
+import Image from "next/image";
+import { toast } from "sonner";
 
 export default function MovieCard({
   movie,
   onSelect,
 }: {
-  movie: any
-  onSelect: (m: any) => void
+  movie: any;
+  onSelect: (m: any) => void;
 }) {
-  const [progress, setProgress] = useState<number>(0)
+  const [progress, setProgress] = useState<number>(0);
 
   useEffect(() => {
-    const savedProgress = localStorage.getItem("watch-progress")
+    const savedProgress = localStorage.getItem("watch-progress");
     if (savedProgress) {
-      const data = JSON.parse(savedProgress)
+      const data = JSON.parse(savedProgress);
       if (data[movie.id]) {
-        setProgress(data[movie.id].progress || 0)
+        setProgress(data[movie.id].progress || 0);
       }
     }
-  }, [movie.id])
+  }, [movie.id]);
 
   const handleClick = () => {
-    onSelect(movie)
-  }
+    onSelect(movie);
+  };
 
   async function handleRequest() {
     try {
@@ -38,21 +38,21 @@ export default function MovieCard({
           year: movie.year,
           user: "guest",
         }),
-      })
+      });
 
       if (res.ok) {
         toast(`🎬 Request sent`, {
           description: `${movie.title} has been requested successfully.`,
-        })
+        });
       } else {
         toast(`❌ Error`, {
           description: "Something went wrong while sending your request.",
-        })
+        });
       }
     } catch (err) {
       toast(`⚠️ Network Error`, {
         description: "Failed to connect to server. Try again later.",
-      })
+      });
     }
   }
 
@@ -93,27 +93,36 @@ export default function MovieCard({
       </div>
 
       <div className="absolute top-2 left-2">
-        <span className="bg-red-600/90 text-white text-xs px-2 py-1 rounded-full font-medium">{movie.category}</span>
+        <span className="bg-red-600/90 text-white text-xs px-2 py-1 rounded-full font-medium">
+          {movie.category}
+        </span>
       </div>
 
       {movie.year && (
         <div className="absolute top-2 right-2">
-          <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">{movie.year}</span>
+          <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">
+            {movie.year}
+          </span>
         </div>
       )}
 
       {/* Title */}
       <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3">
         <h3 className="text-sm sm:text-base font-semibold">{movie.title}</h3>
-        {movie.duration && <p className="text-xs text-gray-300 mt-1">{movie.duration} min</p>}
+        {movie.duration && (
+          <p className="text-xs text-gray-300 mt-1">{movie.duration} min</p>
+        )}
       </div>
 
       {/* Progress bar */}
       {progress > 0 && (
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
-          <div className="h-1 bg-red-600" style={{ width: `${progress * 100}%` }} />
+          <div
+            className="h-1 bg-red-600"
+            style={{ width: `${progress * 100}%` }}
+          />
         </div>
       )}
     </div>
-  )
+  );
 }
