@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Bebas_Neue } from "next/font/google";
 import "./globals.css";
+import { Toaster } from "sonner"; // ⬅️ new import
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,8 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} ${bebas.variable} antialiased`}
       >
         {children}
+        {/* ✅ Mount toaster here so it renders on all pages */}
+        <Toaster />
       </body>
     </html>
   );

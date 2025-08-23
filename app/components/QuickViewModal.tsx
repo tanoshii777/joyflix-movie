@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useFavorites } from "@/app/hooks/useFavorites";
 import { useRatings } from "@/app/hooks/useRatings";
 import { useEffect, useState } from "react";
+import { toast } from "sonner"; // ✅ Sonner for notifications
 
 export default function QuickViewModal({
   movie,
@@ -40,6 +41,36 @@ export default function QuickViewModal({
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   };
+
+  // 🔹 Handle movie request
+  async function handleRequest() {
+    try {
+      const res = await fetch("/api/request-movie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: movie.id,
+          title: movie.title,
+          year: movie.year,
+          user: "guest",
+        }),
+      });
+
+      if (res.ok) {
+        toast("🎬 Request Sent", {
+          description: `${movie.title} has been requested successfully.`,
+        });
+      } else {
+        toast("❌ Error", {
+          description: "Something went wrong while sending your request.",
+        });
+      }
+    } catch (err) {
+      toast("⚠️ Network Error", {
+        description: "Failed to connect to server. Try again later.",
+      });
+    }
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
@@ -97,39 +128,51 @@ export default function QuickViewModal({
         )}
 
         {/* Buttons */}
-        <div className="flex gap-3">
-          {/* Favorite */}
-          <button
-            onClick={() => toggleFavorite(movie.id)}
-            className={`flex-1 py-2 rounded-lg font-semibold transition ${
-              favorites.includes(movie.id)
-                ? "bg-red-600 hover:bg-red-700"
-                : "bg-gray-700 hover:bg-gray-600"
-            }`}
-          >
-            ❤️ {favorites.includes(movie.id) ? "Remove" : "Add to List"}
-          </button>
-
-          {/* Watch / Continue */}
-          {progressTime && duration ? (
+        <div className="flex flex-col gap-3">
+          <div className="flex gap-3">
+            {/* Favorite */}
             <button
-              onClick={() => {
-                onClose();
-                router.push(`/watch/${movie.id}?resume=true`);
-              }}
-              className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
+              onClick={() => toggleFavorite(movie.id)}
+              className={`flex-1 py-2 rounded-lg font-semibold transition ${
+                favorites.includes(movie.id)
+                  ? "bg-red-600 hover:bg-red-700"
+                  : "bg-gray-700 hover:bg-gray-600"
+              }`}
             >
-              ▶ Continue ({formatTime(progressTime)} / {formatTime(duration)})
+              ❤️ {favorites.includes(movie.id) ? "Remove" : "Add to List"}
             </button>
-          ) : (
+
+            {/* Watch / Continue */}
+            {progressTime && duration ? (
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push(`/watch/${movie.id}?resume=true`);
+                }}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
+              >
+                ▶ Continue ({formatTime(progressTime)} / {formatTime(duration)})
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  onClose();
+                  router.push(`/watch/${movie.id}`);
+                }}
+                className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
+              >
+                ▶ Watch Now
+              </button>
+            )}
+          </div>
+
+          {/* ✅ Request button (only if not downloaded) */}
+          {!movie.downloaded && (
             <button
-              onClick={() => {
-                onClose();
-                router.push(`/watch/${movie.id}`);
-              }}
-              className="flex-1 py-2 bg-red-600 hover:bg-red-700 rounded-lg font-semibold transition"
+              onClick={handleRequest}
+              className="w-full py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-semibold transition"
             >
-              ▶ Watch Now
+              📩 Request Movie
             </button>
           )}
         </div>

@@ -7,6 +7,7 @@ import { movies } from "@/app/moviesData";
 import Link from "next/link";
 import Image from "next/image";
 import { useRef, useEffect } from "react";
+import { toast } from "sonner";
 
 export default function WatchMovie() {
   const params = useParams();
@@ -74,6 +75,35 @@ export default function WatchMovie() {
     }
   };
 
+  const handleRequestMovie = async () => {
+    try {
+      const res = await fetch("/api/request-movie", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          movieId: movie.id,
+          title: movie.title,
+
+          user: "guest",
+        }),
+      });
+
+      if (res.ok) {
+        toast("🎬 Request Sent", {
+          description: `${movie.title} has been requested successfully.`,
+        });
+      } else {
+        toast("❌ Error", {
+          description: "Something went wrong while sending your request.",
+        });
+      }
+    } catch (err) {
+      toast("⚠️ Network Error", {
+        description: "Failed to connect to server. Try again later.",
+      });
+    }
+  };
+
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       <header className="flex justify-between items-center px-8 py-6">
@@ -101,12 +131,21 @@ export default function WatchMovie() {
           <h2 className="text-3xl font-bold mb-4">{movie.title}</h2>
           <p className="text-gray-300 mb-6">{movie.description}</p>
 
-          <button
-            onClick={handlePlayNow}
-            className="inline-block bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition"
-          >
-            ▶ Start Watching
-          </button>
+          <div className="flex gap-4">
+            <button
+              onClick={handlePlayNow}
+              className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded-lg font-semibold transition"
+            >
+              ▶ Start Watching
+            </button>
+
+            <button
+              onClick={handleRequestMovie}
+              className="bg-gray-700 hover:bg-gray-600 text-white px-6 py-3 rounded-lg font-semibold transition"
+            >
+              📩 Request Movie
+            </button>
+          </div>
         </div>
       </section>
 
@@ -118,7 +157,7 @@ export default function WatchMovie() {
           poster={movie.thumbnail}
           onTimeUpdate={handleTimeUpdate}
           onEnded={handleEnded}
-          onPlay={handleFirstPlay} // ✅ increments views only when playback starts
+          onPlay={handleFirstPlay}
         >
           <source src={movie.video} type="video/mp4" />
           {movie.subtitle && (
