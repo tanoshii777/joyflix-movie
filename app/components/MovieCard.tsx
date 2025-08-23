@@ -115,38 +115,72 @@ export default function MovieCard({
       </div>
 
       {movie.year && (
-        <div className="absolute top-2 right-2">
-          <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">
-            {movie.year}
-          </span>
-          <button
-            onClick={handleWatchlistToggle}
-            disabled={loading}
-            className="bg-black/70 hover:bg-black/90 text-white p-1.5 rounded-full 
-                       transition-all duration-200 opacity-0 group-hover:opacity-100
-                       hover:scale-110 disabled:opacity-50 ml-2"
-            title={
-              isInWatchlist(movie.id)
-                ? "Remove from Watchlist"
-                : "Add to Watchlist"
-            }
-          >
-            {isInWatchlist(movie.id) ? (
-              <BookmarkCheck size={14} className="text-red-500" />
-            ) : (
-              <Bookmark size={14} />
-            )}
-          </button>
-        </div>
-      )}
+        <>
+          {/* Desktop setup (top-right) */}
+          <div className="absolute top-2 right-2 hidden md:flex items-center">
+            {/* Year badge */}
+            <span className="text-white text-xs px-2 py-1 rounded-full bg-black/60">
+              {movie.year}
+            </span>
 
-      {/* Title */}
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3">
-        <h3 className="text-sm sm:text-base font-semibold">{movie.title}</h3>
-        {movie.duration && (
-          <p className="text-xs text-gray-300 mt-1">{movie.duration} min</p>
-        )}
-      </div>
+            {/* Watchlist button */}
+            <button
+              onClick={handleWatchlistToggle}
+              disabled={loading}
+              className="
+          bg-green-400 hover:bg-pink-600/50 text-white rounded-full ml-1
+          transition-all duration-200 hover:scale-110 disabled:opacity-50
+          p-1.5 md:p-2
+        "
+              title={
+                isInWatchlist(movie.id)
+                  ? "Remove from Watchlist"
+                  : "Add to Watchlist"
+              }
+            >
+              {isInWatchlist(movie.id) ? (
+                <BookmarkCheck
+                  size={14}
+                  className="text-red-500 md:w-5 md:h-5"
+                />
+              ) : (
+                <Bookmark size={14} className="md:w-5 md:h-5" />
+              )}
+            </button>
+          </div>
+
+          {/* Mobile year (top-left or top-right, your choice) */}
+          <div className="absolute top-2 right-2 md:hidden">
+            <span className="text-white text-xs px-2 py-1 rounded-full bg-black/50">
+              {movie.year}
+            </span>
+          </div>
+
+          {/* Mobile watchlist button (bottom-right) */}
+          <div className="absolute bottom-2 right-2 flex md:hidden">
+            <button
+              onClick={handleWatchlistToggle}
+              disabled={loading}
+              className="
+          bg-green-500/70 hover:bg-pink-400 text-white rounded-full
+          transition-all duration-200 hover:scale-110 disabled:opacity-50
+          p-2
+        "
+              title={
+                isInWatchlist(movie.id)
+                  ? "Remove from Watchlist"
+                  : "Add to Watchlist"
+              }
+            >
+              {isInWatchlist(movie.id) ? (
+                <BookmarkCheck size={16} className="text-red-500" />
+              ) : (
+                <Bookmark size={16} />
+              )}
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Progress bar */}
       {progress > 0 && (
