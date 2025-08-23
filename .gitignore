@@ -26,5 +26,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# exclude MOVIES folder inside public
-/public/MOVIES
+# custom - ignore MOVIES folder inside public
+/public/MOVIES/
