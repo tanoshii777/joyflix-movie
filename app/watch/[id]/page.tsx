@@ -83,7 +83,7 @@ export default function WatchMovie() {
         body: JSON.stringify({
           movieId: movie.id,
           title: movie.title,
-
+          year: movie.year,
           user: "guest",
         }),
       });

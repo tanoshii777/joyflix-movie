@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
-import { Eye } from "lucide-react";
-import { toast } from "sonner"; // ✅ using Sonner
+import { Eye, Play } from "lucide-react";
+import { toast } from "sonner";
 
 export default function MovieCard({
   movie,
@@ -15,7 +15,6 @@ export default function MovieCard({
   const [views, setViews] = useState<number>(0);
   const [progress, setProgress] = useState<number>(0);
 
-  // Load stored views + progress
   useEffect(() => {
     const savedViews = localStorage.getItem(`views_${movie.id}`);
     if (savedViews) setViews(parseInt(savedViews, 10));
@@ -29,7 +28,6 @@ export default function MovieCard({
     }
   }, [movie.id]);
 
-  // Just open modal (no increment here)
   const handleClick = () => {
     onSelect(movie);
   };
@@ -64,40 +62,46 @@ export default function MovieCard({
   }
 
   return (
-    <div className="group relative">
-      <div
-        onClick={handleClick}
-        className="min-w-[150px] sm:min-w-0 cursor-pointer overflow-hidden rounded-lg shadow-lg hover:scale-105 transform transition duration-300"
-      >
-        {/* Poster */}
-        <div className="aspect-[2/3] w-full overflow-hidden rounded-lg">
-          <Image
-            src={movie.thumbnail}
-            alt={movie.title}
-            width={500}
-            height={750}
-            className="w-full h-full object-cover"
+    <div
+      onClick={handleClick}
+      className="group relative min-w-[150px] sm:min-w-0 cursor-pointer 
+                 overflow-hidden rounded-lg shadow-lg 
+                 transform transition duration-300 hover:scale-105 hover:shadow-xl"
+    >
+      {/* Poster */}
+      <div className="aspect-[2/3] w-full overflow-hidden rounded-lg">
+        <Image
+          src={movie.thumbnail}
+          alt={movie.title}
+          width={500}
+          height={750}
+          className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+        />
+      </div>
+
+      {/* Dark overlay on hover */}
+      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-center justify-center">
+        {/* Play icon in the center */}
+        <Play className="w-12 h-12 text-white opacity-90" />
+      </div>
+
+      {/* Title & views */}
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex justify-between items-center">
+        <h3 className="text-sm sm:text-base font-semibold">{movie.title}</h3>
+        <div className="flex items-center gap-1 text-gray-300 text-xs">
+          <Eye size={14} /> {views}
+        </div>
+      </div>
+
+      {/* Progress bar */}
+      {progress > 0 && (
+        <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
+          <div
+            className="h-1 bg-red-600"
+            style={{ width: `${progress * 100}%` }}
           />
         </div>
-
-        {/* Dark overlay */}
-        <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex justify-between items-center">
-          <h3 className="text-sm sm:text-base font-semibold">{movie.title}</h3>
-          <div className="flex items-center gap-1 text-gray-300 text-xs">
-            <Eye size={14} /> {views}
-          </div>
-        </div>
-
-        {/* Progress bar */}
-        {progress > 0 && (
-          <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
-            <div
-              className="h-1 bg-red-600"
-              style={{ width: `${progress * 100}%` }}
-            />
-          </div>
-        )}
-      </div>
+      )}
     </div>
   );
 }

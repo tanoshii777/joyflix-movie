@@ -6,7 +6,7 @@ export default function RequestsPage() {
   const [requests, setRequests] = useState<any[]>([]);
   const router = useRouter();
 
-  // Simple auth check (replace later with cookie-based if you want stronger)
+  // Simple admin check
   useEffect(() => {
     if (localStorage.getItem("isAdmin") !== "true") {
       router.push("/admin/login");
@@ -41,52 +41,98 @@ export default function RequestsPage() {
     loadRequests();
   }
 
+  function handleLogout() {
+    localStorage.removeItem("isAdmin");
+    router.push("/admin/login");
+  }
+
+  function goHome() {
+    router.push("/");
+  }
+
   return (
-    <div className="p-6 text-white bg-gray-900 min-h-screen">
-      <h1 className="text-2xl mb-4">Movie Requests</h1>
-      <table className="w-full border-collapse border border-gray-700">
-        <thead>
-          <tr>
-            <th className="border border-gray-700 p-2">Title</th>
-            <th className="border border-gray-700 p-2">Year</th>
-            <th className="border border-gray-700 p-2">Status</th>
-            <th className="border border-gray-700 p-2">Requested At</th>
-            <th className="border border-gray-700 p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {requests.map((r) => (
-            <tr key={r.id}>
-              <td className="border border-gray-700 p-2">{r.title}</td>
-              <td className="border border-gray-700 p-2">{r.year}</td>
-              <td className="border border-gray-700 p-2">{r.status}</td>
-              <td className="border border-gray-700 p-2">
-                {new Date(r.createdAt).toLocaleString()}
-              </td>
-              <td className="border border-gray-700 p-2 flex gap-2">
-                <button
-                  onClick={() => updateStatus(r.id, "approved")}
-                  className="px-3 py-1 bg-green-600 hover:bg-green-700 rounded"
-                >
-                  Approve
-                </button>
-                <button
-                  onClick={() => updateStatus(r.id, "downloaded")}
-                  className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 rounded"
-                >
-                  Mark Downloaded
-                </button>
-                <button
-                  onClick={() => deleteRequest(r.id)}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 rounded"
-                >
-                  Delete
-                </button>
-              </td>
+    <div className="p-6 bg-gray-900 min-h-screen text-white">
+      {/* Header row with title + buttons */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">📩 Movie Requests</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={goHome}
+            className="px-3 py-1 rounded bg-blue-600 hover:bg-blue-700 text-white text-sm"
+          >
+            Back to Home
+          </button>
+          <button
+            onClick={handleLogout}
+            className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-800 text-white text-sm"
+          >
+            Logout
+          </button>
+        </div>
+      </div>
+
+      <div className="overflow-x-auto">
+        <table className="w-full border border-gray-700 rounded-lg overflow-hidden">
+          <thead className="bg-gray-800">
+            <tr>
+              <th className="border border-gray-700 p-3 text-left">Title</th>
+              <th className="border border-gray-700 p-3 text-left">Year</th>
+              <th className="border border-gray-700 p-3 text-left">Status</th>
+              <th className="border border-gray-700 p-3 text-left">
+                Requested At
+              </th>
+              <th className="border border-gray-700 p-3 text-left">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {requests.map((r) => (
+              <tr
+                key={r.id}
+                className="hover:bg-gray-800 transition-colors duration-200"
+              >
+                <td className="border border-gray-700 p-3">{r.title}</td>
+                <td className="border border-gray-700 p-3">{r.year}</td>
+                <td className="border border-gray-700 p-3 capitalize">
+                  {r.status}
+                </td>
+                <td className="border border-gray-700 p-3">
+                  {new Date(r.createdAt).toLocaleString()}
+                </td>
+                <td className="border border-gray-700 p-3 flex gap-2">
+                  <button
+                    onClick={() => updateStatus(r.id, "approved")}
+                    className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    onClick={() => updateStatus(r.id, "downloaded")}
+                    className="px-3 py-1 rounded bg-yellow-600 hover:bg-yellow-700 text-white text-sm"
+                  >
+                    Downloaded
+                  </button>
+                  <button
+                    onClick={() => deleteRequest(r.id)}
+                    className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-sm"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {requests.length === 0 && (
+              <tr>
+                <td
+                  colSpan={5}
+                  className="text-center text-gray-400 py-6 border border-gray-700"
+                >
+                  No requests yet.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
