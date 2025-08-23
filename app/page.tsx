@@ -3,9 +3,9 @@
 import { useEffect, useState, ChangeEvent } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import { Search, X } from "lucide-react"; // ✅ add icons
+import { Search, X } from "lucide-react";
 
-import { movies } from "./moviesData";
+import { movies as localMovies } from "./moviesData";
 import Hero from "./components/Hero";
 import QuickViewModal from "./components/QuickViewModal";
 import Footer from "./components/Footer";
@@ -45,6 +45,9 @@ export default function HomePage() {
     Object.fromEntries(categories.map((c) => [c, 5]))
   );
 
+  const [apiMovies, setApiMovies] = useState<Movie[]>([]);
+  const [allMovies, setAllMovies] = useState<Movie[]>(localMovies);
+
   // 🔍 Mobile search overlay
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
 
@@ -71,23 +74,52 @@ export default function HomePage() {
     checkAuth();
   }, [router]);
 
+  // ✅ Fetch movies from TMDB
+  useEffect(() => {
+    const fetchMovies = async () => {
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`
+        );
+        const data = await res.json();
+
+        const mapped: Movie[] = data.results.map((m: any) => ({
+          id: `tmdb-${m.id}`,
+          title: m.title,
+          description: m.overview,
+          thumbnail: m.poster_path
+            ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
+            : "/placeholder.svg",
+          category: "Trending",
+        }));
+
+        setApiMovies(mapped);
+        setAllMovies([...localMovies, ...mapped]);
+      } catch (err) {
+        console.error("Failed to fetch TMDB movies:", err);
+      }
+    };
+
+    fetchMovies();
+  }, []);
+
   // Load top viewed movies
   useEffect(() => {
     if (!isLoggedIn) return;
 
     const viewsData: Record<string, number> = {};
-    movies.forEach((m) => {
+    allMovies.forEach((m) => {
       const count = localStorage.getItem(`views-${m.id}`);
       viewsData[m.id] = count ? Number.parseInt(count) : 0;
     });
 
-    const sorted = [...movies].sort(
+    const sorted = [...allMovies].sort(
       (a, b) => (viewsData[b.id] || 0) - (viewsData[a.id] || 0)
     );
 
     const top = sorted.filter((m) => viewsData[m.id] > 0).slice(0, 10);
     setTopViewed(top);
-  }, [isLoggedIn, selectedMovie]);
+  }, [isLoggedIn, selectedMovie, allMovies]);
 
   // Logout handler
   const handleLogout = async () => {
@@ -99,7 +131,6 @@ export default function HomePage() {
     }
   };
 
-  // Prevent UI flash before auth check
   if (!authChecked) {
     return (
       <main className="flex items-center justify-center h-screen text-white">
@@ -110,8 +141,8 @@ export default function HomePage() {
 
   if (!isLoggedIn) return null;
 
-  // ✅ Normal HomePage logic
-  const filteredMovies = movies.filter((m) =>
+  // ✅ Search on local + TMDB
+  const filteredMovies = allMovies.filter((m) =>
     m.title.toLowerCase().includes(query.toLowerCase())
   );
 
@@ -126,7 +157,6 @@ export default function HomePage() {
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 py-4 bg-black/60 backdrop-blur-md">
-        {/* Logo + Greeting */}
         <div className="flex flex-col">
           <h1 className="font-bold text-red-600 tracking-wide drop-shadow-md">
             <span className="text-2xl sm:hidden">JoyFlix</span>
@@ -139,7 +169,7 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* 🔍 Search Bar (desktop only) */}
+        {/* 🔍 Search Bar (desktop) */}
         <div className="relative w-full max-w-md ml-6 hidden sm:block">
           <input
             type="text"
@@ -179,9 +209,8 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Mobile: Search Icon + Nav + Logout */}
+        {/* Mobile: Search + Nav + Logout */}
         <div className="flex items-center gap-4 sm:gap-6">
-          {/* Mobile search icon */}
           <button
             className="sm:hidden text-gray-300 hover:text-red-400"
             onClick={() => setMobileSearchOpen(true)}
@@ -189,7 +218,6 @@ export default function HomePage() {
             <Search size={22} />
           </button>
 
-          {/* Nav (desktop only) */}
           <nav className="space-x-6 hidden sm:flex">
             <a href="#" className="hover:text-red-400 transition">
               Home
@@ -202,7 +230,6 @@ export default function HomePage() {
             </a>
           </nav>
 
-          {/* Logout */}
           <button
             onClick={handleLogout}
             className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition"
@@ -267,8 +294,8 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Hero Banner */}
-      <Hero movies={movies} />
+      {/* Hero */}
+      <Hero movies={allMovies} />
 
       {/* 🔥 Top Viewed */}
       {topViewed.length > 0 && (
@@ -287,10 +314,28 @@ export default function HomePage() {
         </section>
       )}
 
+      {/* 🌍 Trending */}
+      {apiMovies.length > 0 && (
+        <section className="px-6 py-8">
+          <h2 className="text-xl font-semibold mb-6">🌍 Trending Now</h2>
+          <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
+            {apiMovies.map((movie) => (
+              <MovieCard
+                key={movie.id}
+                movie={movie}
+                onSelect={setSelectedMovie}
+              />
+            ))}
+          </div>
+        </section>
+      )}
+
       {/* Categories */}
       <div className="pt-6 sm:pt-12">
         {categories.map((category) => {
-          const categoryMovies = movies.filter((m) => m.category === category);
+          const categoryMovies = allMovies.filter(
+            (m) => m.category === category
+          );
           if (categoryMovies.length === 0) return null;
 
           const visibleMovies = categoryMovies.slice(0, visibleCount[category]);
@@ -323,7 +368,7 @@ export default function HomePage() {
         })}
       </div>
 
-      {/* Quick View Modal */}
+      {/* Quick View */}
       {selectedMovie && (
         <QuickViewModal
           movie={selectedMovie}
@@ -331,7 +376,6 @@ export default function HomePage() {
         />
       )}
 
-      {/* Footer */}
       <Footer />
     </main>
   );

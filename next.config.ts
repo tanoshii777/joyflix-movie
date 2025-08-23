@@ -9,6 +9,9 @@ const nextConfig: NextConfig = {
     // 🚀 Ignore TypeScript build errors (so deploy won’t fail)
     ignoreBuildErrors: true,
   },
+  images: {
+    domains: ["image.tmdb.org"], // ✅ allow TMDB images
+  },
 };
 
 export default nextConfig;
