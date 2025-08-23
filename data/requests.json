@@ -6,5 +6,30 @@
     "user": "guest",
     "status": "approved",
     "createdAt": "2025-08-23T04:11:38.592Z"
+  },
+  {
+    "id": 1755937906623,
+    "movieId": "tmdb-575265",
+    "title": "Mission: Impossible - The Final Reckoning",
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-23T08:31:46.623Z"
+  },
+  {
+    "id": 1755937929189,
+    "movieId": "tmdb-1234821",
+    "title": "Jurassic World Rebirth",
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-23T08:32:09.189Z"
+  },
+  {
+    "id": 1755941058918,
+    "movieId": "tmdb-1311031",
+    "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+    "year": 2025,
+    "user": "guest",
+    "status": "approved",
+    "createdAt": "2025-08-23T09:24:18.918Z"
   }
 ]

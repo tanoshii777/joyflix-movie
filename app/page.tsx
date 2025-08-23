@@ -1,18 +1,23 @@
-"use client";
+"use client"
 
-import { useEffect, useState, ChangeEvent } from "react";
-import { useRouter } from "next/navigation";
-import Image from "next/image";
-import { Search, X } from "lucide-react";
+import { useEffect, useState, type ChangeEvent, type MouseEvent } from "react"
+import { useRouter } from "next/navigation"
+import Image from "next/image"
+import { X, Filter, Search } from "lucide-react"
 
-import { movies as localMovies } from "./moviesData";
-import Hero from "./components/Hero";
-import QuickViewModal from "./components/QuickViewModal";
-import Footer from "./components/Footer";
-import MovieCard from "./components/MovieCard";
-import type { Movie } from "./types/movie";
+import { movies as localMovies } from "./moviesData"
+import Hero from "./components/Hero"
+import QuickViewModal from "./components/QuickViewModal"
+import Footer from "./components/Footer"
+import MovieCard from "./components/MovieCard"
+import MovieCardSkeleton from "./components/MovieCardSkeleton"
+import NavbarWrapper from "./components/NavbarWrapper"
+import SearchSuggestions from "./components/SearchSuggestions"
+import RecommendationEngine from "./components/RecommendationEngine"
+import type { Movie } from "./types/movie"
 
 const categories: string[] = [
+  "All",
   "Action",
   "Romance",
   "Horror",
@@ -22,232 +27,191 @@ const categories: string[] = [
   "True Crime",
   "Thriller",
   "Fantasy",
-];
+]
 
 type User = {
-  email: string;
-  username?: string;
-};
+  email: string
+  username?: string
+}
 
 export default function HomePage() {
-  const router = useRouter();
+  const router = useRouter()
 
   // 🔒 Auth states
-  const [authChecked, setAuthChecked] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const [authChecked, setAuthChecked] = useState(false)
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const [user, setUser] = useState<User | null>(null)
 
   // 🎬 Page states
-  const [query, setQuery] = useState<string>("");
-  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null);
-  const [topViewed, setTopViewed] = useState<Movie[]>([]);
+  const [query, setQuery] = useState<string>("")
+  const [selectedMovie, setSelectedMovie] = useState<Movie | null>(null)
+  const [selectedCategory, setSelectedCategory] = useState<string>("All")
   const [visibleCount, setVisibleCount] = useState<Record<string, number>>(() =>
-    Object.fromEntries(categories.map((c) => [c, 5]))
-  );
+    Object.fromEntries(categories.map((c) => [c, 5])),
+  )
 
-  const [apiMovies, setApiMovies] = useState<Movie[]>([]);
-  const [allMovies, setAllMovies] = useState<Movie[]>(localMovies);
+  const [apiMovies, setApiMovies] = useState<Movie[]>([])
+  const [allMovies, setAllMovies] = useState<Movie[]>(localMovies)
+  const [isLoadingMovies, setIsLoadingMovies] = useState(true)
 
-  // 🔍 Mobile search overlay
-  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  // 🔍 Search states
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
+  const [showSearchSuggestions, setShowSearchSuggestions] = useState(false)
+  const [searchFocused, setSearchFocused] = useState(false)
 
   // 🔒 Check authentication via API
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const res = await fetch("/api/auth/me");
+        const res = await fetch("/api/auth/me")
         if (res.ok) {
-          const data = await res.json();
-          setIsLoggedIn(true);
-          setUser(data.user);
+          const data = await res.json()
+          setIsLoggedIn(true)
+          setUser(data.user)
         } else {
-          router.replace("/login");
+          router.replace("/login")
         }
       } catch (err) {
-        console.error("Auth check failed:", err);
-        router.replace("/login");
+        console.error("Auth check failed:", err)
+        router.replace("/login")
       } finally {
-        setAuthChecked(true);
+        setAuthChecked(true)
       }
-    };
+    }
 
-    checkAuth();
-  }, [router]);
+    checkAuth()
+  }, [router])
 
   // ✅ Fetch movies from TMDB
   useEffect(() => {
     const fetchMovies = async () => {
       try {
+        setIsLoadingMovies(true)
         const res = await fetch(
-          `https://api.themoviedb.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`
-        );
-        const data = await res.json();
+          `https://api.themoviedb.org/3/trending/movie/week?api_key=${process.env.NEXT_PUBLIC_TMDB_API_KEY}&language=en-US`,
+        )
+        const data = await res.json()
 
         const mapped: Movie[] = data.results.map((m: any) => ({
           id: `tmdb-${m.id}`,
           title: m.title,
           description: m.overview,
-          thumbnail: m.poster_path
-            ? `https://image.tmdb.org/t/p/w500${m.poster_path}`
-            : "/placeholder.svg",
+          thumbnail: m.poster_path ? `https://image.tmdb.org/t/p/w500${m.poster_path}` : "/placeholder.svg",
           category: "Trending",
-        }));
+          year: new Date(m.release_date).getFullYear(),
+        }))
 
-        setApiMovies(mapped);
-        setAllMovies([...localMovies, ...mapped]);
+        setApiMovies(mapped)
+        setAllMovies([...localMovies, ...mapped])
       } catch (err) {
-        console.error("Failed to fetch TMDB movies:", err);
+        console.error("Failed to fetch TMDB movies:", err)
+      } finally {
+        setIsLoadingMovies(false)
       }
-    };
-
-    fetchMovies();
-  }, []);
-
-  // Load top viewed movies
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const viewsData: Record<string, number> = {};
-    allMovies.forEach((m) => {
-      const count = localStorage.getItem(`views-${m.id}`);
-      viewsData[m.id] = count ? Number.parseInt(count) : 0;
-    });
-
-    const sorted = [...allMovies].sort(
-      (a, b) => (viewsData[b.id] || 0) - (viewsData[a.id] || 0)
-    );
-
-    const top = sorted.filter((m) => viewsData[m.id] > 0).slice(0, 10);
-    setTopViewed(top);
-  }, [isLoggedIn, selectedMovie, allMovies]);
-
-  // Logout handler
-  const handleLogout = async () => {
-    try {
-      await fetch("/api/auth/logout", { method: "POST" });
-      router.push("/login");
-    } catch (err) {
-      console.error("Logout failed:", err);
     }
-  };
+
+    fetchMovies()
+  }, [])
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element
+      if (!target.closest(".search-container")) {
+        setShowSearchSuggestions(false)
+        setSearchFocused(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [])
 
   if (!authChecked) {
     return (
       <main className="flex items-center justify-center h-screen text-white">
         <p>Loading...</p>
       </main>
-    );
+    )
   }
 
-  if (!isLoggedIn) return null;
+  if (!isLoggedIn) return null
 
-  // ✅ Search on local + TMDB
-  const filteredMovies = allMovies.filter((m) =>
-    m.title.toLowerCase().includes(query.toLowerCase())
-  );
+  // ✅ Search and filter movies
+  const filteredMovies = allMovies.filter((m) => {
+    const matchesSearch = m.title.toLowerCase().includes(query.toLowerCase())
+    const matchesCategory = selectedCategory === "All" || m.category === selectedCategory
+    return matchesSearch && matchesCategory
+  })
+
+  const recentlyAdded = allMovies.filter((m) => m.year && m.year >= 2023).slice(0, 10)
+
+  const popularMovies = allMovies
+    .filter((m) =>
+      ["Avengers", "Pirates", "Sonic", "Transformers", "Dune"].some((keyword) =>
+        m.title.toLowerCase().includes(keyword.toLowerCase()),
+      ),
+    )
+    .slice(0, 10)
 
   const loadMore = (category: string) => {
     setVisibleCount((prev) => ({
       ...prev,
       [category]: prev[category] + 5,
-    }));
-  };
+    }))
+  }
+
+  const handleMovieSelect = (movie: Movie) => {
+    setSelectedMovie(movie)
+
+    // Track viewing history
+    const history = JSON.parse(localStorage.getItem("viewingHistory") || "[]")
+    const updatedHistory = [movie.id, ...history.filter((id: string) => id !== movie.id)].slice(0, 20)
+    localStorage.setItem("viewingHistory", JSON.stringify(updatedHistory))
+  }
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-gray-900 to-black text-white">
-      {/* Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 flex justify-between items-center px-4 sm:px-8 py-4 bg-black/60 backdrop-blur-md">
-        <div className="flex flex-col">
-          <h1 className="font-bold text-red-600 tracking-wide drop-shadow-md">
-            <span className="text-2xl sm:hidden">JoyFlix</span>
-            <span className="hidden sm:inline text-4xl">JOYFLIX</span>
-          </h1>
-          {user && (
-            <p className="text-sm text-gray-300 mt-1">
-              Hi, {user.username ?? user.email}
-            </p>
+      <NavbarWrapper />
+
+      {/* 🔍 Enhanced Desktop Search */}
+      <div className="hidden md:block fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-96">
+        <div className="search-container relative">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search movies..."
+              value={query}
+              onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
+              onFocus={() => {
+                setSearchFocused(true)
+                setShowSearchSuggestions(true)
+              }}
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-black/80 backdrop-blur-sm text-white placeholder-gray-400 outline-none focus:ring-2 focus:ring-red-500 border border-gray-700"
+            />
+          </div>
+
+          {(showSearchSuggestions || searchFocused) && (
+            <SearchSuggestions
+              query={query}
+              movies={allMovies}
+              onMovieSelect={(movie) => {
+                handleMovieSelect(movie)
+                setShowSearchSuggestions(false)
+                setQuery("")
+              }}
+              onQueryChange={setQuery}
+            />
           )}
         </div>
-
-        {/* 🔍 Search Bar (desktop) */}
-        <div className="relative w-full max-w-md ml-6 hidden sm:block">
-          <input
-            type="text"
-            placeholder="Search movies..."
-            value={query}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setQuery(e.target.value)
-            }
-            className="w-full px-4 py-2 rounded-lg bg-black/70 text-white outline-none focus:ring-2 focus:ring-red-500"
-          />
-          {query && (
-            <div className="absolute mt-2 w-full bg-black/90 rounded-lg shadow-lg max-h-60 overflow-y-auto z-50">
-              {filteredMovies.length > 0 ? (
-                filteredMovies.map((movie) => (
-                  <div
-                    key={movie.id}
-                    onClick={() => {
-                      setSelectedMovie(movie);
-                      setQuery("");
-                    }}
-                    className="flex items-center gap-3 p-2 hover:bg-red-600/30 rounded cursor-pointer"
-                  >
-                    <Image
-                      src={movie.thumbnail || "/placeholder.svg"}
-                      alt={movie.title}
-                      width={50}
-                      height={75}
-                      className="rounded"
-                    />
-                    <p>{movie.title}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="p-3 text-gray-400">No results found.</p>
-              )}
-            </div>
-          )}
-        </div>
-
-        {/* Mobile: Search + Nav + Logout */}
-        <div className="flex items-center gap-4 sm:gap-6">
-          <button
-            className="sm:hidden text-gray-300 hover:text-red-400"
-            onClick={() => setMobileSearchOpen(true)}
-          >
-            <Search size={22} />
-          </button>
-
-          <nav className="space-x-6 hidden sm:flex">
-            <a href="#" className="hover:text-red-400 transition">
-              Home
-            </a>
-            <a href="#" className="hover:text-red-400 transition">
-              Movies
-            </a>
-            <a href="#" className="hover:text-red-400 transition">
-              Series
-            </a>
-          </nav>
-
-          <button
-            onClick={handleLogout}
-            className="px-4 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition"
-          >
-            Logout
-          </button>
-        </div>
-      </header>
+      </div>
 
       {/* 🔍 Mobile Search Overlay */}
       {mobileSearchOpen && (
         <div className="fixed inset-0 z-[60] bg-black/90 flex flex-col p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-lg font-semibold">Search</h2>
-            <button
-              className="text-gray-400 hover:text-red-400"
-              onClick={() => setMobileSearchOpen(false)}
-            >
+            <button className="text-gray-400 hover:text-red-400" onClick={() => setMobileSearchOpen(false)}>
               <X size={24} />
             </button>
           </div>
@@ -257,9 +221,7 @@ export default function HomePage() {
             autoFocus
             placeholder="Search movies..."
             value={query}
-            onChange={(e: ChangeEvent<HTMLInputElement>) =>
-              setQuery(e.target.value)
-            }
+            onChange={(e: ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)}
             className="w-full px-4 py-3 rounded-lg bg-black/70 text-white outline-none focus:ring-2 focus:ring-red-500"
           />
 
@@ -270,9 +232,9 @@ export default function HomePage() {
                   <div
                     key={movie.id}
                     onClick={() => {
-                      setSelectedMovie(movie);
-                      setQuery("");
-                      setMobileSearchOpen(false);
+                      handleMovieSelect(movie)
+                      setQuery("")
+                      setMobileSearchOpen(false)
                     }}
                     className="flex items-center gap-3 p-2 hover:bg-red-600/30 rounded cursor-pointer"
                   >
@@ -294,89 +256,103 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Hero */}
-      <Hero movies={allMovies} />
+      <div className="pt-20">
+        <Hero movies={allMovies} />
 
-      {/* 🔥 Top Viewed */}
-      {topViewed.length > 0 && (
-        <section className="px-6 py-8">
-          <h2 className="text-2xl font-bold mb-6">🔥 Top Viewed</h2>
-          <div className="flex gap-4 overflow-x-auto sm:grid sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 scrollbar-hide">
-            {topViewed.map((movie, index) => (
-              <div key={movie.id} className="relative">
-                <span className="absolute -top-3 -left-3 bg-red-600 text-white font-bold text-lg w-8 h-8 flex items-center justify-center rounded-full shadow-md">
-                  {index + 1}
-                </span>
-                <MovieCard movie={movie} onSelect={setSelectedMovie} />
-              </div>
+        <RecommendationEngine movies={allMovies} onMovieSelect={handleMovieSelect} />
+
+        <section className="px-6 py-4 border-b border-gray-800">
+          <div className="flex items-center gap-2 mb-4">
+            <Filter className="w-5 h-5 text-gray-400" />
+            <span className="text-sm text-gray-400">Filter by genre:</span>
+          </div>
+          <div className="flex gap-2 overflow-x-auto scrollbar-hide">
+            {categories.map((category) => (
+              <button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedCategory === category
+                    ? "bg-red-600 text-white"
+                    : "bg-gray-800 text-gray-300 hover:bg-gray-700"
+                }`}
+              >
+                {category}
+              </button>
             ))}
           </div>
         </section>
-      )}
 
-      {/* 🌍 Trending */}
-      {apiMovies.length > 0 && (
-        <section className="px-6 py-8">
-          <h2 className="text-xl font-semibold mb-6">🌍 Trending Now</h2>
-          <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
-            {apiMovies.map((movie) => (
-              <MovieCard
-                key={movie.id}
-                movie={movie}
-                onSelect={setSelectedMovie}
-              />
-            ))}
-          </div>
-        </section>
-      )}
+        {recentlyAdded.length > 0 && (
+          <section className="px-6 py-8">
+            <h2 className="text-xl font-semibold mb-6">🆕 Recently Added</h2>
+            <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
+              {isLoadingMovies
+                ? Array.from({ length: 5 }).map((_, i) => <MovieCardSkeleton key={i} />)
+                : recentlyAdded.map((movie) => <MovieCard key={movie.id} movie={movie} onSelect={handleMovieSelect} />)}
+            </div>
+          </section>
+        )}
 
-      {/* Categories */}
-      <div className="pt-6 sm:pt-12">
-        {categories.map((category) => {
-          const categoryMovies = allMovies.filter(
-            (m) => m.category === category
-          );
-          if (categoryMovies.length === 0) return null;
+        {popularMovies.length > 0 && (
+          <section className="px-6 py-8">
+            <h2 className="text-xl font-semibold mb-6">🔥 Popular Movies</h2>
+            <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
+              {isLoadingMovies
+                ? Array.from({ length: 5 }).map((_, i) => <MovieCardSkeleton key={i} />)
+                : popularMovies.map((movie) => <MovieCard key={movie.id} movie={movie} onSelect={handleMovieSelect} />)}
+            </div>
+          </section>
+        )}
 
-          const visibleMovies = categoryMovies.slice(0, visibleCount[category]);
+        {apiMovies.length > 0 && (
+          <section className="px-6 py-8">
+            <h2 className="text-xl font-semibold mb-6">🌍 Trending Now</h2>
+            <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
+              {isLoadingMovies
+                ? Array.from({ length: 5 }).map((_, i) => <MovieCardSkeleton key={i} />)
+                : apiMovies.map((movie) => <MovieCard key={movie.id} movie={movie} onSelect={handleMovieSelect} />)}
+            </div>
+          </section>
+        )}
 
-          return (
-            <section key={category} className="px-6 py-8">
-              <h2 className="text-xl font-semibold mb-6">{category}</h2>
-              <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
-                {visibleMovies.map((movie) => (
-                  <MovieCard
-                    key={movie.id}
-                    movie={movie}
-                    onSelect={setSelectedMovie}
-                  />
-                ))}
-              </div>
+        <div className="pt-6 sm:pt-12">
+          {categories.slice(1).map((category) => {
+            const categoryMovies = allMovies.filter((m) => m.category === category)
+            if (categoryMovies.length === 0) return null
 
-              {visibleMovies.length < categoryMovies.length && (
-                <div className="mt-4 flex justify-center">
-                  <button
-                    onClick={() => loadMore(category)}
-                    className="px-4 py-2 bg-red-600 hover:bg-red-700 transition rounded-lg text-white font-semibold"
-                  >
-                    Load More
-                  </button>
+            const visibleMovies = categoryMovies.slice(0, visibleCount[category])
+
+            return (
+              <section key={category} className="px-6 py-8">
+                <h2 className="text-xl font-semibold mb-6">{category}</h2>
+                <div className="flex gap-4 overflow-x-auto sm:overflow-visible sm:grid sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 scrollbar-hide">
+                  {isLoadingMovies
+                    ? Array.from({ length: 5 }).map((_, i) => <MovieCardSkeleton key={i} />)
+                    : visibleMovies.map((movie) => (
+                        <MovieCard key={movie.id} movie={movie} onSelect={handleMovieSelect} />
+                      ))}
                 </div>
-              )}
-            </section>
-          );
-        })}
+
+                {visibleMovies.length < categoryMovies.length && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => loadMore(category)}
+                      className="px-4 py-2 bg-red-600 hover:bg-red-700 transition rounded-lg text-white font-semibold"
+                    >
+                      Load More
+                    </button>
+                  </div>
+                )}
+              </section>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Quick View */}
-      {selectedMovie && (
-        <QuickViewModal
-          movie={selectedMovie}
-          onClose={() => setSelectedMovie(null)}
-        />
-      )}
+      {selectedMovie && <QuickViewModal movie={selectedMovie} onClose={() => setSelectedMovie(null)} />}
 
       <Footer />
     </main>
-  );
+  )
 }

@@ -22,6 +22,7 @@ export const bebas = Bebas_Neue({
 export const metadata: Metadata = {
   title: "JoyFlix | Movies",
   description: "Welcome To JoyFlix and enjoy watching free movies",
+    generator: 'v0.app'
 };
 
 export default function RootLayout({

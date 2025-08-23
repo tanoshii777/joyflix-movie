@@ -1,36 +1,31 @@
-"use client";
+"use client"
 
-import { useEffect, useState } from "react";
-import Image from "next/image";
-import { Eye, Play } from "lucide-react";
-import { toast } from "sonner";
+import { useEffect, useState } from "react"
+import Image from "next/image"
+import { toast } from "sonner"
 
 export default function MovieCard({
   movie,
   onSelect,
 }: {
-  movie: any;
-  onSelect: (m: any) => void;
+  movie: any
+  onSelect: (m: any) => void
 }) {
-  const [views, setViews] = useState<number>(0);
-  const [progress, setProgress] = useState<number>(0);
+  const [progress, setProgress] = useState<number>(0)
 
   useEffect(() => {
-    const savedViews = localStorage.getItem(`views_${movie.id}`);
-    if (savedViews) setViews(parseInt(savedViews, 10));
-
-    const savedProgress = localStorage.getItem("watch-progress");
+    const savedProgress = localStorage.getItem("watch-progress")
     if (savedProgress) {
-      const data = JSON.parse(savedProgress);
+      const data = JSON.parse(savedProgress)
       if (data[movie.id]) {
-        setProgress(data[movie.id].progress || 0);
+        setProgress(data[movie.id].progress || 0)
       }
     }
-  }, [movie.id]);
+  }, [movie.id])
 
   const handleClick = () => {
-    onSelect(movie);
-  };
+    onSelect(movie)
+  }
 
   async function handleRequest() {
     try {
@@ -43,21 +38,21 @@ export default function MovieCard({
           year: movie.year,
           user: "guest",
         }),
-      });
+      })
 
       if (res.ok) {
         toast(`🎬 Request sent`, {
           description: `${movie.title} has been requested successfully.`,
-        });
+        })
       } else {
         toast(`❌ Error`, {
           description: "Something went wrong while sending your request.",
-        });
+        })
       }
     } catch (err) {
       toast(`⚠️ Network Error`, {
         description: "Failed to connect to server. Try again later.",
-      });
+      })
     }
   }
 
@@ -71,7 +66,7 @@ export default function MovieCard({
       {/* Poster */}
       <div className="aspect-[2/3] w-full overflow-hidden rounded-lg">
         <Image
-          src={movie.thumbnail}
+          src={movie.thumbnail || "/placeholder.svg"}
           alt={movie.title}
           width={500}
           height={750}
@@ -97,23 +92,28 @@ export default function MovieCard({
         </div>
       </div>
 
-      {/* Title & views */}
-      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3 flex justify-between items-center">
-        <h3 className="text-sm sm:text-base font-semibold">{movie.title}</h3>
-        <div className="flex items-center gap-1 text-gray-300 text-xs">
-          <Eye size={14} /> {views}
+      <div className="absolute top-2 left-2">
+        <span className="bg-red-600/90 text-white text-xs px-2 py-1 rounded-full font-medium">{movie.category}</span>
+      </div>
+
+      {movie.year && (
+        <div className="absolute top-2 right-2">
+          <span className="bg-black/70 text-white text-xs px-2 py-1 rounded-full">{movie.year}</span>
         </div>
+      )}
+
+      {/* Title */}
+      <div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+        <h3 className="text-sm sm:text-base font-semibold">{movie.title}</h3>
+        {movie.duration && <p className="text-xs text-gray-300 mt-1">{movie.duration} min</p>}
       </div>
 
       {/* Progress bar */}
       {progress > 0 && (
         <div className="absolute bottom-0 left-0 w-full h-1 bg-gray-700">
-          <div
-            className="h-1 bg-red-600"
-            style={{ width: `${progress * 100}%` }}
-          />
+          <div className="h-1 bg-red-600" style={{ width: `${progress * 100}%` }} />
         </div>
       )}
     </div>
-  );
+  )
 }
