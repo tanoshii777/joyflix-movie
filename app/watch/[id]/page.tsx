@@ -1,7 +1,5 @@
 "use client";
 
-// app/watch/[id]/page.tsx
-
 import { useParams } from "next/navigation";
 import { movies } from "@/app/moviesData";
 import Link from "next/link";
@@ -16,7 +14,7 @@ export default function WatchMovie() {
   const movie = movies.find((m) => m.id === movieId);
   const videoRef = useRef<HTMLVideoElement>(null);
 
-  // Restore saved progress when page loads
+  // Restore saved progress
   useEffect(() => {
     const saved = localStorage.getItem(`progress-${movieId}`);
     if (saved && videoRef.current) {
@@ -25,7 +23,7 @@ export default function WatchMovie() {
     }
   }, [movieId]);
 
-  // Save progress as user watches
+  // Save progress
   const handleTimeUpdate = () => {
     if (videoRef.current) {
       const progress = {
@@ -36,12 +34,12 @@ export default function WatchMovie() {
     }
   };
 
-  // Clear progress when movie finishes
+  // Clear when finished
   const handleEnded = () => {
     localStorage.removeItem(`progress-${movieId}`);
   };
 
-  // Increment views only once when video first plays
+  // Increment views
   const handleFirstPlay = () => {
     const viewsKey = `views_${movieId}`;
     const playedKey = `played_${movieId}`;
@@ -129,6 +127,7 @@ export default function WatchMovie() {
 
         <div className="flex flex-col justify-center">
           <h2 className="text-3xl font-bold mb-4">{movie.title}</h2>
+          <p className="text-gray-300 mb-2">📅 {movie.year}</p>
           <p className="text-gray-300 mb-6">{movie.description}</p>
 
           <div className="flex gap-4">

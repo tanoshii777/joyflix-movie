@@ -5,6 +5,7 @@ export const movies: Movie[] = [
   {
     id: 1,
     title: "Nobody - 2021",
+    year: 2021,
     thumbnail: "/posters/nobody-poster.png",
     video: "/movies/Nobody.mp4",
     startTime: 120,
@@ -16,6 +17,7 @@ export const movies: Movie[] = [
   {
     id: 2,
     title: "Puss in Boots: The Last Wish",
+    year: 2022,
     thumbnail: "/posters/PussNBoots.png",
     video: "/movies/PussNBoots.mp4",
     startTime: 120,
@@ -27,6 +29,7 @@ export const movies: Movie[] = [
   {
     id: 3,
     title: "Train to Busan",
+    year: 2016,
     thumbnail: "/posters/Train to busan.png",
     video: "/movies/Train to busan.mkv",
     startTime: 120,
@@ -38,6 +41,7 @@ export const movies: Movie[] = [
   {
     id: 4,
     title: "Avengers: Endgame",
+    year: 2019,
     thumbnail: "/posters/Avengers2019.png",
     video: "/movies/Avengers2019.mp4",
     startTime: 120,
@@ -49,6 +53,7 @@ export const movies: Movie[] = [
   {
     id: 5,
     title: "The Electric State",
+    year: 2025,
     thumbnail: "/posters/ElectricState.png",
     video: "/movies/ElectricState.mkv",
     startTime: 120,
@@ -60,6 +65,7 @@ export const movies: Movie[] = [
   {
     id: 6,
     title: "The Conjuring",
+    year: 2013,
     thumbnail: "/posters/The Conjuring.png",
     video: "/movies/The Conjuring.mp4",
     startTime: 120,
@@ -71,6 +77,7 @@ export const movies: Movie[] = [
   {
     id: 7,
     title: "Avengers: Infinity War",
+    year: 2018,
     thumbnail: "/posters/Avengers2018.png",
     video: "/movies/Avengers2018.mp4",
     startTime: 120,
@@ -82,6 +89,7 @@ export const movies: Movie[] = [
   {
     id: 8,
     title: "How to Train Your Dragon: The Hidden World",
+    year: 2019,
     thumbnail: "/posters/How to train your dragon - hidden.png",
     video: "/movies/How to train your dragon - hidden.mp4",
     startTime: 120,
@@ -93,6 +101,7 @@ export const movies: Movie[] = [
   {
     id: 9,
     title: "Papillon",
+    year: 2017,
     thumbnail: "/posters/Papillon.png",
     video: "/movies/Papillon.mp4",
     startTime: 120,
@@ -104,6 +113,7 @@ export const movies: Movie[] = [
   {
     id: 10,
     title: "Transformers: Rise of the Beasts",
+    year: 2023,
     thumbnail: "/posters/Transformers.png",
     video: "/movies/Transformers.mp4",
     startTime: 120,
@@ -115,6 +125,7 @@ export const movies: Movie[] = [
   {
     id: 11,
     title: "The Old Guard 2",
+    year: 2025,
     thumbnail: "/posters/The old guard 2.png",
     video: "/movies/The old guard 2.mkv",
     startTime: 120,
@@ -126,6 +137,7 @@ export const movies: Movie[] = [
   {
     id: 12,
     title: "Elemental",
+    year: 2023,
     thumbnail: "/posters/Elemental.png",
     video: "/movies/Elemental.mp4",
     startTime: 120,
@@ -137,6 +149,7 @@ export const movies: Movie[] = [
   {
     id: 13,
     title: "Ballerina 2025",
+    year: 2025,
     thumbnail: "/posters/Ballerina.png",
     video: "/movies/Ballerina 2025.mkv",
     startTime: 120,
@@ -148,6 +161,7 @@ export const movies: Movie[] = [
   {
     id: 14,
     title: "Sonic the Hedgehog 3",
+    year: 2024,
     thumbnail: "/posters/Sonic the hedgehog 3.png",
     video: "/movies/Sonic the hedgehog 3.mkv",
     startTime: 120,
@@ -159,6 +173,7 @@ export const movies: Movie[] = [
   {
     id: 15,
     title: "Sonic the Hedgehog 2",
+    year: 2022,
     thumbnail: "/posters/Sonic the hedgehog 2.png",
     video: "/movies/Sonic the hedgehog 2.mp4",
     startTime: 120,
@@ -170,6 +185,7 @@ export const movies: Movie[] = [
   {
     id: 16,
     title: "Until Dawn",
+    year: 2025,
     thumbnail: "/posters/Until dawn.png",
     video: "/movies/Until Dawn 2025.mkv",
     startTime: 120,
@@ -181,6 +197,7 @@ export const movies: Movie[] = [
   {
     id: 17,
     title: "Evil Dead Rise",
+    year: 2023,
     thumbnail: "/posters/Evil dead rise.png",
     video: "/movies/Evil Dead Rise 2023.mp4",
     startTime: 120,
@@ -192,6 +209,7 @@ export const movies: Movie[] = [
   {
     id: 18,
     title: "Saw X",
+    year: 2023,
     thumbnail: "/posters/Saw X.png",
     video: "/movies/Saw X.mkv",
     startTime: 120,
@@ -203,6 +221,7 @@ export const movies: Movie[] = [
   {
     id: 19,
     title: "Pirates of the Caribbean: Dead Men Tell No Tales",
+    year: 2017,
     thumbnail: "/posters/Pirates of the caribbean dead men tell no tales.png",
     video: "/movies/Pirates of the Caribbean - Dead Men Tell No tales.mp4",
     startTime: 120,
@@ -214,6 +233,7 @@ export const movies: Movie[] = [
   {
     id: 20,
     title: "Pirates of the Caribbean: The Curse of the Black Pearl",
+    year: 2003,
     thumbnail: "/posters/Pirates of the caribbean curse of the black pearl.png",
     video: "/movies/Pirates of the Caribbean The Curse of the Black Pearl.mp4",
     startTime: 120,
@@ -226,6 +246,7 @@ export const movies: Movie[] = [
   {
     id: 22,
     title: "Pirates of the Caribbean: At World's End",
+    year: 2007,
     thumbnail: "/posters/Pirates of the Caribbean At World's End.png",
     video: "/movies/Pirates of the Caribbean At World's End (2007).mp4",
     startTime: 120,
@@ -237,6 +258,7 @@ export const movies: Movie[] = [
   {
     id: 23,
     title: "Pirates of the Caribbean Dead Man's Chest",
+    year: 2006,
     thumbnail: "/posters/Pirates of the Caribbean Dead Man's Chest.png",
     video: "/movies/Pirates of the Caribbean Dead Man's Chest.mp4",
     startTime: 120,
@@ -248,6 +270,7 @@ export const movies: Movie[] = [
   {
     id: 24,
     title: "Nowhere",
+    year: 2023,
     thumbnail: "/posters/nowhere.png",
     video: "/movies/Nowhere.mp4",
     startTime: 120,
@@ -259,6 +282,7 @@ export const movies: Movie[] = [
   {
     id: 25,
     title: "Anabelle",
+    year: 2014,
     thumbnail: "/posters/anabelle.png",
     video: "/movies/Anabelle.mp4",
     startTime: 120,
@@ -270,6 +294,7 @@ export const movies: Movie[] = [
   {
     id: 26,
     title: "The Bad Guys 2",
+    year: 2025,
     thumbnail: "/posters/the bad guy 2.png",
     video: "/movies/The Bad Guys 2.mkv",
     startTime: 120,
@@ -281,6 +306,7 @@ export const movies: Movie[] = [
   {
     id: 27,
     title: "Dune: Part Two",
+    year: 2024,
     thumbnail: "/posters/dune part two.png",
     video: "/movies/Dune Part Two.mp4",
     startTime: 120,
@@ -292,6 +318,7 @@ export const movies: Movie[] = [
   {
     id: 28,
     title: "Nobody 2",
+    year: 2025,
     thumbnail: "/posters/nobody2.png",
     video: "/movies/Nobody 2.mp4",
     startTime: 120,
@@ -300,10 +327,10 @@ export const movies: Movie[] = [
     description:
       "Suburban dad Hutch Mansell, a former lethal assassin, is pulled back into his violent past after thwarting a home invasion, setting off a chain of events that unravels secrets about his wife Becca's past and his own.",
   },
-
   {
     id: 30,
     title: "F1: The Movie",
+    year: 2025,
     thumbnail: "/posters/f1 the movie.png",
     video: "/movies/F1 The Movie.mkv",
     startTime: 120,
