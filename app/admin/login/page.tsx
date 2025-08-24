@@ -1,125 +1,75 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
+import type React from "react";
 
-export default function RequestsPage() {
-  const [requests, setRequests] = useState<any[]>([]);
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
+export default function AdminLogin() {
+  const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  // Simple admin check
-  useEffect(() => {
-    if (localStorage.getItem("isAdmin") !== "true") {
-      router.push("/admin/login");
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    // Simple password check - in production, this should be server-side
+    if (password === "admin123") {
+      localStorage.setItem("isAdmin", "true");
+      toast.success("✅ Admin login successful!");
+      router.push("/admin/dashboard");
+    } else {
+      toast.error("❌ Invalid admin password");
     }
-  }, [router]);
 
-  async function loadRequests() {
-    const res = await fetch("/api/request-movie");
-    const data = await res.json();
-    setRequests(data);
-  }
-
-  useEffect(() => {
-    loadRequests();
-  }, []);
-
-  async function updateStatus(id: number, status: string) {
-    await fetch("/api/request-movie", {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id, status }),
-    });
-    loadRequests();
-  }
-
-  async function deleteRequest(id: number) {
-    await fetch("/api/request-movie", {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id }),
-    });
-    loadRequests();
-  }
-
-  function handleLogout() {
-    localStorage.removeItem("isAdmin");
-    router.push("/admin/login");
-  }
+    setLoading(false);
+  };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen text-white">
-      {/* Header row with title + logout */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">📩 Movie Requests</h1>
-        <button
-          onClick={handleLogout}
-          className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-800 text-white text-sm"
-        >
-          Logout
-        </button>
-      </div>
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black flex items-center justify-center p-6">
+      <div className="auth-card rounded-xl p-8 w-full max-w-md">
+        <div className="text-center mb-8">
+          <h1 className="text-3xl font-bold text-white mb-2">JoyFlix Admin</h1>
+          <p className="text-gray-400">Enter admin password to continue</p>
+        </div>
 
-      <div className="overflow-x-auto">
-        <table className="w-full border border-gray-700 rounded-lg overflow-hidden">
-          <thead className="bg-gray-800">
-            <tr>
-              <th className="border border-gray-700 p-3 text-left">Title</th>
-              <th className="border border-gray-700 p-3 text-left">Year</th>
-              <th className="border border-gray-700 p-3 text-left">Status</th>
-              <th className="border border-gray-700 p-3 text-left">
-                Requested At
-              </th>
-              <th className="border border-gray-700 p-3 text-left">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {requests.map((r) => (
-              <tr
-                key={r.id}
-                className="hover:bg-gray-800 transition-colors duration-200"
-              >
-                <td className="border border-gray-700 p-3">{r.title}</td>
-                <td className="border border-gray-700 p-3">{r.year}</td>
-                <td className="border border-gray-700 p-3 capitalize">
-                  {r.status}
-                </td>
-                <td className="border border-gray-700 p-3">
-                  {new Date(r.createdAt).toLocaleString()}
-                </td>
-                <td className="border border-gray-700 p-3 flex gap-2">
-                  <button
-                    onClick={() => updateStatus(r.id, "approved")}
-                    className="px-3 py-1 rounded bg-green-600 hover:bg-green-700 text-white text-sm"
-                  >
-                    Approve
-                  </button>
-                  <button
-                    onClick={() => updateStatus(r.id, "downloaded")}
-                    className="px-3 py-1 rounded bg-yellow-600 hover:bg-yellow-700 text-white text-sm"
-                  >
-                    Downloaded
-                  </button>
-                  <button
-                    onClick={() => deleteRequest(r.id)}
-                    className="px-3 py-1 rounded bg-red-600 hover:bg-red-700 text-white text-sm"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {requests.length === 0 && (
-              <tr>
-                <td
-                  colSpan={5}
-                  className="text-center text-gray-400 py-6 border border-gray-700"
-                >
-                  No requests yet.
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        <form onSubmit={handleLogin} className="space-y-6">
+          <div>
+            <label
+              htmlFor="password"
+              className="block text-sm font-medium text-gray-300 mb-2"
+            >
+              Admin Password
+            </label>
+            <input
+              id="password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="input-focus w-full px-4 py-3 rounded-lg bg-gray-800 border border-gray-700 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+              placeholder="Enter admin password"
+              required
+            />
+          </div>
+
+          <button
+            type="submit"
+            disabled={loading}
+            className="button-hover w-full py-3 px-4 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Logging in..." : "Login to Admin Panel"}
+          </button>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => router.push("/")}
+            className="text-gray-400 hover:text-white transition-colors"
+          >
+            ← Back to Home
+          </button>
+        </div>
       </div>
     </div>
   );
