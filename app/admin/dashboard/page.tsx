@@ -44,7 +44,22 @@ import {
   Settings,
   UserCheck,
   PlayCircle,
+  Download,
+  Trash2,
+  Eye,
 } from "lucide-react";
+
+interface MovieRequest {
+  _id: string;
+  movieId: string;
+  title: string;
+  year?: number;
+  user: string;
+  status: "pending" | "approved" | "downloaded" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+  adminNotes?: string;
+}
 
 // Mock data for analytics
 const userGrowthData = [
@@ -54,13 +69,6 @@ const userGrowthData = [
   { month: "Apr", users: 1680, active: 1400 },
   { month: "May", users: 1850, active: 1580 },
   { month: "Jun", users: 2100, active: 1800 },
-];
-
-const movieRequestsData = [
-  { status: "Pending", count: 45, color: "hsl(var(--chart-4))" },
-  { status: "Approved", count: 32, color: "hsl(var(--chart-3))" },
-  { status: "Downloaded", count: 28, color: "hsl(var(--chart-1))" },
-  { status: "Rejected", count: 8, color: "hsl(var(--chart-5))" },
 ];
 
 const topMoviesData = [
@@ -79,14 +87,19 @@ const systemMetrics = [
 ];
 
 export default function AdminDashboard() {
+  const [movieRequests, setMovieRequests] = useState<MovieRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [updatingRequest, setUpdatingRequest] = useState<string | null>(null);
+
   const [stats, setStats] = useState({
     totalUsers: 2100,
     activeUsers: 1800,
     totalMovies: 1250,
-    pendingRequests: 45,
+    pendingRequests: 0,
     totalViews: 125000,
     avgRating: 4.7,
   });
+
   const [recentActivity, setRecentActivity] = useState([
     {
       id: 1,
@@ -117,20 +130,178 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
+  const fetchMovieRequests = async () => {
+    try {
+      setLoadingRequests(true);
+      const response = await fetch("/api/request-movie", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      });
+
+      if (response.ok) {
+        const requests = await response.json();
+        setMovieRequests(requests);
+
+        // Update stats with real data
+        const pendingCount = requests.filter(
+          (req: MovieRequest) => req.status === "pending"
+        ).length;
+        setStats((prev) => ({ ...prev, pendingRequests: pendingCount }));
+
+        // Update recent activity with latest requests
+        const latestRequests = requests
+          .slice(0, 3)
+          .map((req: MovieRequest, index: number) => ({
+            id: `req-${req._id}`,
+            type: "movie_request",
+            message: `Movie requested: ${req.title}`,
+            time: new Date(req.createdAt).toLocaleString(),
+          }));
+
+        setRecentActivity((prev) => [
+          ...latestRequests,
+          ...prev
+            .filter((activity) => !String(activity.id).startsWith("req-"))
+            .slice(0, 4 - latestRequests.length),
+        ]);
+      }
+    } catch (error) {
+      console.error("Failed to fetch movie requests:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load movie requests",
+        variant: "destructive",
+      });
+    } finally {
+      setLoadingRequests(false);
+    }
+  };
+
+  const updateRequestStatus = async (requestId: string, status: string) => {
+    try {
+      setUpdatingRequest(requestId);
+      const response = await fetch("/api/request-movie", {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ _id: requestId, status }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: `Request ${status} successfully`,
+        });
+        fetchMovieRequests(); // Refresh data
+      } else {
+        throw new Error("Failed to update request");
+      }
+    } catch (error) {
+      console.error("Error updating request:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update request",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingRequest(null);
+    }
+  };
+
+  const deleteRequest = async (requestId: string) => {
+    try {
+      setUpdatingRequest(requestId);
+      console.log("[v0] Attempting to delete request:", requestId); // Added debug logging
+
+      const response = await fetch("/api/request-movie", {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ _id: requestId }),
+      });
+
+      const result = await response.json(); // Parse response to get error details
+
+      if (response.ok && result.success) {
+        toast({
+          title: "Success",
+          description: "Request deleted successfully",
+        });
+        fetchMovieRequests(); // Refresh data
+      } else {
+        const errorMessage = result.error || "Failed to delete request";
+        console.error("[v0] Delete request failed:", result);
+        throw new Error(errorMessage);
+      }
+    } catch (error) {
+      console.error("[v0] Error deleting request:", error);
+      const errorMessage =
+        error instanceof Error ? error.message : "Failed to delete request";
+      toast({
+        title: "Error",
+        description: errorMessage, // Show specific error message
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingRequest(null);
+    }
+  };
+
   useEffect(() => {
     if (localStorage.getItem("isAdmin") !== "true") {
       router.push("/admin/login");
+    } else {
+      fetchMovieRequests();
     }
   }, [router]);
 
-  const handleLogout = () => {
-    localStorage.removeItem("isAdmin");
-    toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of the admin panel.",
-    });
-    router.push("/admin/login");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+      });
+
+      localStorage.removeItem("isAdmin");
+
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of the admin panel.",
+      });
+
+      router.push("/admin/login");
+    } catch (error) {
+      console.error("Logout error:", error);
+      localStorage.removeItem("isAdmin");
+      router.push("/admin/login");
+    }
   };
+
+  const movieRequestsData = [
+    {
+      status: "Pending",
+      count: movieRequests.filter((req) => req.status === "pending").length,
+      color: "hsl(var(--chart-4))",
+    },
+    {
+      status: "Approved",
+      count: movieRequests.filter((req) => req.status === "approved").length,
+      color: "hsl(var(--chart-3))",
+    },
+    {
+      status: "Downloaded",
+      count: movieRequests.filter((req) => req.status === "downloaded").length,
+      color: "hsl(var(--chart-1))",
+    },
+    {
+      status: "Rejected",
+      count: movieRequests.filter((req) => req.status === "rejected").length,
+      color: "hsl(var(--chart-5))",
+    },
+  ];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
@@ -158,6 +329,18 @@ export default function AdminDashboard() {
       default:
         return <Activity className="w-4 h-4 text-gray-500" />;
     }
+  };
+
+  const getStatusBadge = (status: string) => {
+    const variants = {
+      pending: "bg-yellow-600 text-white",
+      approved: "bg-green-600 text-white",
+      downloaded: "bg-blue-600 text-white",
+      rejected: "bg-red-600 text-white",
+    };
+    return (
+      variants[status as keyof typeof variants] || "bg-gray-600 text-white"
+    );
   };
 
   return (
@@ -308,13 +491,126 @@ export default function AdminDashboard() {
             </Card>
           </div>
 
-          <Tabs defaultValue="analytics" className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4">
+          <Tabs defaultValue="requests" className="space-y-6">
+            <TabsList className="grid w-full grid-cols-5">
+              <TabsTrigger value="requests">Movie Requests</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
               <TabsTrigger value="content">Content</TabsTrigger>
               <TabsTrigger value="system">System</TabsTrigger>
               <TabsTrigger value="activity">Activity</TabsTrigger>
             </TabsList>
+
+            <TabsContent value="requests" className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Film className="w-5 h-5" />
+                    Movie Requests Management
+                  </CardTitle>
+                  <CardDescription>
+                    Monitor and manage user movie requests
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {loadingRequests ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : movieRequests.length === 0 ? (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Film className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                      <p>No movie requests found</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {movieRequests.map((request) => (
+                        <div
+                          key={request._id}
+                          className="flex items-center justify-between p-4 rounded-lg border bg-card/50"
+                        >
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <h4 className="font-semibold text-foreground">
+                                {request.title}
+                              </h4>
+                              <Badge className={getStatusBadge(request.status)}>
+                                {request.status}
+                              </Badge>
+                            </div>
+                            <div className="text-sm text-muted-foreground space-y-1">
+                              <p>
+                                Year: {request.year || "N/A"} • User:{" "}
+                                {request.user}
+                              </p>
+                              <p>
+                                Requested:{" "}
+                                {new Date(request.createdAt).toLocaleString()}
+                              </p>
+                              {request.adminNotes && (
+                                <p className="text-xs bg-muted p-2 rounded">
+                                  Notes: {request.adminNotes}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 ml-4">
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => router.push(`/admin/requests`)}
+                              className="gap-1"
+                            >
+                              <Eye className="w-4 h-4" />
+                              View
+                            </Button>
+
+                            {request.status === "pending" && (
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  updateRequestStatus(request._id, "approved")
+                                }
+                                disabled={updatingRequest === request._id}
+                                className="gap-1 bg-green-600 hover:bg-green-700"
+                              >
+                                <CheckCircle className="w-4 h-4" />
+                                Approve
+                              </Button>
+                            )}
+
+                            {request.status === "approved" && (
+                              <Button
+                                size="sm"
+                                onClick={() =>
+                                  updateRequestStatus(request._id, "downloaded")
+                                }
+                                disabled={updatingRequest === request._id}
+                                className="gap-1 bg-blue-600 hover:bg-blue-700"
+                              >
+                                <Download className="w-4 h-4" />
+                                Downloaded
+                              </Button>
+                            )}
+
+                            <Button
+                              size="sm"
+                              variant="destructive"
+                              onClick={() => deleteRequest(request._id)}
+                              disabled={updatingRequest === request._id}
+                              className="gap-1"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                              Delete
+                            </Button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
 
             <TabsContent value="analytics" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

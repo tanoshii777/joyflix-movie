@@ -1,7 +1,7 @@
 // app/api/movies/route.ts
 import { NextResponse } from "next/server"
-import connectDB from "@lib/db"
-import Movie from "@models/Movie"
+import connectDB from "@/lib/db"
+import Movie from "@/models/Movie"
 
 // GET → fetch all movies
 export async function GET() {

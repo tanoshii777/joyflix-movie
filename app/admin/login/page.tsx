@@ -14,13 +14,28 @@ export default function AdminLogin() {
     e.preventDefault();
     setLoading(true);
 
-    // Simple password check - in production, this should be server-side
-    if (password === "admin123") {
-      localStorage.setItem("isAdmin", "true");
-      toast.success("✅ Admin login successful!");
-      router.push("/admin/dashboard");
-    } else {
-      toast.error("❌ Invalid admin password");
+    try {
+      const response = await fetch("/api/admin/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        localStorage.setItem("isAdmin", "true");
+        toast.success("✅ Admin login successful!");
+        router.push("/admin/dashboard");
+        router.refresh();
+      } else {
+        toast.error("❌ " + (data.error || "Invalid admin password"));
+      }
+    } catch (error) {
+      console.error("Login error:", error);
+      toast.error("❌ Login failed. Please try again.");
     }
 
     setLoading(false);

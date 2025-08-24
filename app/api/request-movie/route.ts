@@ -1,38 +1,22 @@
 import { NextResponse } from "next/server";
-import { promises as fs } from "fs";
-import path from "path";
+import dbConnect from "@/lib/db";
+import MovieRequest from "@/models/MovieRequest";
 
-const filePath = path.join(process.cwd(), "data", "requests.json");
-
-console.log("[v0] API Route loaded - request-movie endpoint is active");
-
-// helper: load requests
-async function loadRequests() {
-  try {
-    const data = await fs.readFile(filePath, "utf-8");
-    return JSON.parse(data);
-  } catch (error) {
-    console.error("[v0] Error loading requests:", error);
-    return [];
-  }
-}
-
-// helper: save requests
-async function saveRequests(requests: any[]) {
-  try {
-    await fs.mkdir(path.dirname(filePath), { recursive: true });
-    await fs.writeFile(filePath, JSON.stringify(requests, null, 2));
-  } catch (error) {
-    console.error("[v0] Error saving requests:", error);
-    throw new Error("Failed to save request to database");
-  }
-}
+console.log(
+  "[v0] API Route loaded - request-movie endpoint using MongoDB at",
+  new Date().toISOString()
+);
 
 // POST: create a new request
 export async function POST(req: Request) {
   console.log("[v0] POST request received at /api/request-movie");
   try {
+    console.log("[v0] Connecting to database..."); // Added database connection logging
+    await dbConnect();
+    console.log("[v0] Database connected, processing request...");
+
     const body = await req.json();
+    console.log("[v0] Request body:", body); // Added request body logging
 
     if (!body.movieId || !body.title) {
       return NextResponse.json(
@@ -41,12 +25,11 @@ export async function POST(req: Request) {
       );
     }
 
-    const requests = await loadRequests();
-
-    // check if already requested
-    const existing = requests.find(
-      (r: any) => r.movieId === body.movieId && r.status !== "downloaded"
-    );
+    // Check if already requested
+    const existing = await MovieRequest.findOne({
+      movieId: body.movieId,
+      status: { $ne: "downloaded" },
+    });
 
     if (existing) {
       return NextResponse.json(
@@ -55,21 +38,23 @@ export async function POST(req: Request) {
       );
     }
 
-    const newReq = {
-      id: Date.now(),
+    const newRequest = new MovieRequest({
       movieId: body.movieId,
       title: body.title,
       year: body.year,
       user: body.user || "guest",
-      status: "pending", // pending | approved | downloaded
-      createdAt: new Date().toISOString(),
-    };
+      status: "pending",
+    });
 
-    requests.push(newReq);
-    await saveRequests(requests);
+    await newRequest.save();
 
-    console.log("[v0] Movie request created successfully:", newReq.title);
-    return NextResponse.json({ success: true, request: newReq });
+    console.log(
+      "[v0] Movie request created successfully:",
+      newRequest.title,
+      "ID:",
+      newRequest._id
+    );
+    return NextResponse.json({ success: true, request: newRequest });
   } catch (error) {
     console.error("[v0] Error creating movie request:", error);
     return NextResponse.json(
@@ -83,7 +68,10 @@ export async function POST(req: Request) {
 export async function GET() {
   console.log("[v0] GET request received at /api/request-movie");
   try {
-    const requests = await loadRequests();
+    console.log("[v0] Connecting to database..."); // Added database connection logging
+    await dbConnect();
+    const requests = await MovieRequest.find({}).sort({ createdAt: -1 });
+    console.log("[v0] Found", requests.length, "requests"); // Added request count logging
     return NextResponse.json(requests);
   } catch (error) {
     console.error("[v0] Error fetching requests:", error);
@@ -98,19 +86,21 @@ export async function GET() {
 export async function PATCH(req: Request) {
   console.log("[v0] PATCH request received at /api/request-movie");
   try {
+    await dbConnect();
     const body = await req.json();
-    const requests = await loadRequests();
 
-    const idx = requests.findIndex((r: any) => r.id === body.id);
-    if (idx === -1) {
+    const request = await MovieRequest.findByIdAndUpdate(
+      body._id || body.id,
+      { ...body },
+      { new: true }
+    );
+
+    if (!request) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
     }
 
-    requests[idx] = { ...requests[idx], ...body };
-    await saveRequests(requests);
-
-    console.log("[v0] Request updated successfully:", requests[idx].title);
-    return NextResponse.json({ success: true, request: requests[idx] });
+    console.log("[v0] Request updated successfully:", request.title);
+    return NextResponse.json({ success: true, request });
   } catch (error) {
     console.error("[v0] Error updating request:", error);
     return NextResponse.json(
@@ -124,17 +114,14 @@ export async function PATCH(req: Request) {
 export async function DELETE(req: Request) {
   console.log("[v0] DELETE request received at /api/request-movie");
   try {
+    await dbConnect();
     const body = await req.json();
-    let requests = await loadRequests();
 
-    const originalLength = requests.length;
-    requests = requests.filter((r: any) => r.id !== body.id);
+    const request = await MovieRequest.findByIdAndDelete(body._id || body.id);
 
-    if (requests.length === originalLength) {
+    if (!request) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
     }
-
-    await saveRequests(requests);
 
     console.log("[v0] Request deleted successfully");
     return NextResponse.json({ success: true });

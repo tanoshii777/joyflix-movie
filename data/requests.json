@@ -1,101 +1,83 @@
 [
   {
-    "id": 1756005053144,
-    "movieId": 16,
-    "title": "Until Dawn",
-    "year": 2025,
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-24T03:10:53.144Z"
-  },
-  {
-    "id": 1756005180011,
-    "movieId": "tmdb-1151031",
-    "title": "Bring Her Back",
-    "year": 2025,
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-24T03:13:00.011Z"
-  },
-  {
-    "id": 1756006942071,
-    "movieId": 10,
-    "title": "Transformers: Rise of the Beasts",
+    "id": 1756011376806,
+    "movieId": 24,
+    "title": "Nowhere",
     "year": 2023,
     "user": "guest",
     "status": "pending",
-    "createdAt": "2025-08-24T03:42:22.071Z"
+    "createdAt": "2025-08-24T04:56:16.806Z"
   },
   {
-    "id": 1756006967077,
-    "movieId": 2,
-    "title": "Puss in Boots: The Last Wish",
-    "year": 2022,
+    "id": 1756012018449,
+    "movieId": 25,
+    "title": "Anabelle",
+    "year": 2014,
     "user": "guest",
     "status": "pending",
-    "createdAt": "2025-08-24T03:42:47.077Z"
+    "createdAt": "2025-08-24T05:06:58.449Z"
   },
   {
-    "id": 1756006982579,
-    "movieId": 1,
-    "title": "Nobody - 2021",
-    "year": 2021,
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-24T03:43:02.579Z"
-  },
-  {
-    "id": 1756006992333,
-    "movieId": 5,
-    "title": "The Electric State",
-    "year": 2025,
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-24T03:43:12.333Z"
-  },
-  {
-    "id": 1756007005672,
-    "movieId": 4,
-    "title": "Avengers: Endgame",
-    "year": 2019,
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-24T03:43:25.672Z"
-  },
-  {
-    "id": 1756007022853,
-    "movieId": 7,
-    "title": "Avengers: Infinity War",
-    "year": 2018,
-    "user": "guest",
-    "status": "pending",
-    "createdAt": "2025-08-24T03:43:42.853Z"
-  },
-  {
-    "id": 1756007039377,
+    "id": 1756012043706,
     "movieId": 14,
     "title": "Sonic the Hedgehog 3",
     "year": 2024,
     "user": "guest",
     "status": "pending",
-    "createdAt": "2025-08-24T03:43:59.377Z"
+    "createdAt": "2025-08-24T05:07:23.706Z"
   },
   {
-    "id": 1756007046523,
-    "movieId": "tmdb-911430",
-    "title": "F1",
+    "id": 1756012056019,
+    "movieId": 13,
+    "title": "Ballerina 2025",
     "year": 2025,
     "user": "guest",
     "status": "pending",
-    "createdAt": "2025-08-24T03:44:06.523Z"
+    "createdAt": "2025-08-24T05:07:36.019Z"
   },
   {
-    "id": 1756008371236,
-    "movieId": 6,
-    "title": "The Conjuring",
-    "year": 2013,
+    "id": 1756012068156,
+    "movieId": 22,
+    "title": "Pirates of the Caribbean: At World's End",
+    "year": 2007,
     "user": "guest",
     "status": "pending",
-    "createdAt": "2025-08-24T04:06:11.236Z"
+    "createdAt": "2025-08-24T05:07:48.156Z"
+  },
+  {
+    "id": 1756012080710,
+    "movieId": 2,
+    "title": "Puss in Boots: The Last Wish",
+    "year": 2022,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-24T05:08:00.710Z"
+  },
+  {
+    "id": 1756012194086,
+    "movieId": 11,
+    "title": "The Old Guard 2",
+    "year": 2025,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-24T05:09:54.086Z"
+  },
+  {
+    "id": 1756012323306,
+    "movieId": "tmdb-803796",
+    "title": "KPop Demon Hunters",
+    "year": 2025,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-24T05:12:03.306Z"
+  },
+  {
+    "id": 1756012539078,
+    "movieId": "tmdb-1311031",
+    "title": "Demon Slayer: Kimetsu no Yaiba Infinity Castle",
+    "year": 2025,
+    "user": "guest",
+    "status": "pending",
+    "createdAt": "2025-08-24T05:15:39.078Z"
   }
 ]
