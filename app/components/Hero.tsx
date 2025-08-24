@@ -24,8 +24,12 @@ export default function Hero({ movies }: HeroProps) {
 
   // Jump video to "climax" start time
   useEffect(() => {
-    if (videoRef.current && featuredMovie?.startTime) {
+    if (videoRef.current && featuredMovie?.startTime !== undefined) {
       videoRef.current.currentTime = featuredMovie.startTime;
+
+      videoRef.current.play().catch((err) => {
+        console.warn("Autoplay interrupted:", err);
+      });
     }
   }, [featuredMovie]);
 
@@ -34,7 +38,6 @@ export default function Hero({ movies }: HeroProps) {
       {/* 🎥 Background Video */}
       <video
         ref={videoRef}
-        key={featuredMovie.id}
         autoPlay
         muted={isMuted}
         loop
