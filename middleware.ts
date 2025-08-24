@@ -32,25 +32,43 @@ export async function middleware(req: NextRequest) {
     try {
       await AuthTokens.verifyToken(token)
     } catch (err) {
-      // Try to refresh token
       const refreshToken = req.cookies.get("refresh_token")?.value
+
       if (refreshToken) {
         try {
           await AuthTokens.verifyRefreshToken(refreshToken)
-          // Redirect to refresh endpoint
-          return NextResponse.redirect(new URL("/api/auth/refresh", req.url))
+          // Create response that refreshes the token without redirect
+          const response = NextResponse.next()
+
+          // Set a header to indicate token refresh is needed
+          response.headers.set("X-Token-Refresh-Needed", "true")
+          return response
         } catch (refreshErr) {
-          // Both tokens invalid, clear and redirect to login
+          // Only redirect to login if both tokens are definitively invalid
+          console.error("Both tokens invalid:", refreshErr)
           const response = NextResponse.redirect(new URL("/login", req.url))
           response.cookies.delete("token")
           response.cookies.delete("refresh_token")
           return response
         }
       } else {
-        // No refresh token, clear and redirect to login
-        const response = NextResponse.redirect(new URL("/login", req.url))
-        response.cookies.delete("token")
-        return response
+        // Check if this is a network/server error vs auth error
+        const errorMessage = err instanceof Error ? err.message : String(err)
+
+        // Only redirect for actual auth errors, not network issues
+        if (
+          errorMessage.includes("expired") ||
+          errorMessage.includes("invalid") ||
+          errorMessage.includes("malformed")
+        ) {
+          const response = NextResponse.redirect(new URL("/login", req.url))
+          response.cookies.delete("token")
+          return response
+        } else {
+          // For network/server errors, allow the request to continue
+          console.warn("Token verification failed due to server issue, allowing request:", errorMessage)
+          return NextResponse.next()
+        }
       }
     }
   }
