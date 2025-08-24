@@ -39,47 +39,48 @@ export default function RequestsPage() {
 
   const fetchRequests = async () => {
     try {
-      console.log("[v0] Fetching movie requests...");
-      const response = await fetch("/api/request-movie");
+      const response = await fetch("/api/request-movie", {
+        cache: "no-store",
+        headers: {
+          "Cache-Control": "no-cache, no-store, must-revalidate",
+        },
+      });
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
       const data = await response.json();
-      console.log("[v0] Fetched requests:", data);
       setRequests(data);
     } catch (error) {
-      console.error("[v0] Error fetching requests:", error);
+      console.error("Error fetching requests:", error);
+      alert("Failed to fetch requests. Please refresh the page.");
     } finally {
       setLoading(false);
     }
   };
 
   const approveRequest = async (requestId: string) => {
+    if (!confirm("Are you sure you want to approve this request?")) return;
+
     setActionLoading((prev) => ({ ...prev, [requestId]: true }));
     try {
-      console.log("[v0] Approving request:", requestId);
       const response = await fetch("/api/request-movie", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ _id: requestId, status: "approved" }),
       });
 
       const result = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to approve request");
       }
 
-      console.log("[v0] Request approved successfully:", result);
-
-      setRequests((prev) =>
-        prev.map((req) =>
-          req._id === requestId ? { ...req, status: "approved" } : req
-        )
-      );
+      await fetchRequests();
       alert("Request approved successfully!");
     } catch (error) {
-      console.error("[v0] Failed to approve request:", error);
+      console.error("Failed to approve request:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to approve request";
       alert(`Error: ${errorMessage}`);
@@ -89,29 +90,33 @@ export default function RequestsPage() {
   };
 
   const deleteRequest = async (requestId: string) => {
-    if (!confirm("Are you sure you want to delete this request?")) return;
+    if (
+      !confirm(
+        "Are you sure you want to delete this request? This action cannot be undone."
+      )
+    )
+      return;
 
     setActionLoading((prev) => ({ ...prev, [requestId]: true }));
     try {
-      console.log("[v0] Deleting request:", requestId);
       const response = await fetch("/api/request-movie", {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ _id: requestId }),
       });
 
       const result = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to delete request");
       }
 
-      console.log("[v0] Request deleted successfully:", result);
-
-      setRequests((prev) => prev.filter((req) => req._id !== requestId));
+      await fetchRequests();
       alert("Request deleted successfully!");
     } catch (error) {
-      console.error("[v0] Failed to delete request:", error);
+      console.error("Failed to delete request:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to delete request";
       alert(`Error: ${errorMessage}`);
@@ -121,31 +126,28 @@ export default function RequestsPage() {
   };
 
   const markAsDownloaded = async (requestId: string) => {
+    if (!confirm("Mark this request as downloaded?")) return;
+
     setActionLoading((prev) => ({ ...prev, [requestId]: true }));
     try {
-      console.log("[v0] Marking as downloaded:", requestId);
       const response = await fetch("/api/request-movie", {
         method: "PATCH",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+        },
         body: JSON.stringify({ _id: requestId, status: "downloaded" }),
       });
 
       const result = await response.json();
 
-      if (!response.ok) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error || "Failed to mark as downloaded");
       }
 
-      console.log("[v0] Request marked as downloaded:", result);
-
-      setRequests((prev) =>
-        prev.map((req) =>
-          req._id === requestId ? { ...req, status: "downloaded" } : req
-        )
-      );
+      await fetchRequests();
       alert("Request marked as downloaded successfully!");
     } catch (error) {
-      console.error("[v0] Failed to mark as downloaded:", error);
+      console.error("Failed to mark as downloaded:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to mark as downloaded";
       alert(`Error: ${errorMessage}`);
@@ -163,7 +165,6 @@ export default function RequestsPage() {
 
     setActionLoading((prev) => ({ ...prev, [`email-${requestId}`]: true }));
     try {
-      console.log("[v0] Sending notification:", { requestId, emailInfo });
       const request = requests.find((r) => r._id === requestId);
 
       if (!request) {
@@ -171,7 +172,6 @@ export default function RequestsPage() {
         return;
       }
 
-      // Backend expects: type, request (object), userEmail
       const payload = {
         type: emailInfo.type,
         request: {
@@ -199,16 +199,29 @@ export default function RequestsPage() {
         throw new Error(result.error || "Failed to send notification");
       }
 
-      console.log("[v0] Notification sent successfully");
       alert("Notification sent successfully!");
       setShowEmailForm((prev) => ({ ...prev, [requestId]: false }));
     } catch (error) {
-      console.error("[v0] Failed to send notification:", error);
+      console.error("Failed to send notification:", error);
       const errorMessage =
         error instanceof Error ? error.message : "Failed to send notification";
       alert(`Error: ${errorMessage}`);
     } finally {
       setActionLoading((prev) => ({ ...prev, [`email-${requestId}`]: false }));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/logout", {
+        method: "POST",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Logout API error:", error);
+    } finally {
+      localStorage.removeItem("isAdmin");
+      window.location.href = "/admin/login";
     }
   };
 
@@ -274,10 +287,7 @@ export default function RequestsPage() {
             Back to Home
           </button>
           <button
-            onClick={() => {
-              localStorage.removeItem("isAdmin");
-              router.push("/admin/login");
-            }}
+            onClick={handleLogout}
             className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded transition-colors"
           >
             Logout
@@ -351,43 +361,66 @@ export default function RequestsPage() {
                 {showEmailForm[request._id] && (
                   <div className="bg-gray-700 rounded p-4 mt-4">
                     <h4 className="text-lg font-medium mb-3 flex items-center gap-2">
-                      Send Notification for:{" "}
-                      <span className="text-yellow-400">{request.title}</span>
+                      📧 Send Email Notification
                     </h4>
 
-                    <div className="flex flex-col gap-3 max-w-md">
-                      <input
-                        type="email"
-                        placeholder="Recipient Email"
-                        value={emailData[request._id]?.email || ""}
-                        onChange={(e) =>
-                          updateEmailData(request._id, "email", e.target.value)
-                        }
-                        className="px-3 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-yellow-400 focus:outline-none"
-                      />
+                    <div className="space-y-3">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          User Email Address
+                        </label>
+                        <input
+                          type="email"
+                          value={emailData[request._id]?.email || ""}
+                          onChange={(e) =>
+                            updateEmailData(
+                              request._id,
+                              "email",
+                              e.target.value
+                            )
+                          }
+                          className="w-full px-3 py-2 bg-gray-600 border border-gray-500 rounded focus:outline-none focus:border-blue-500"
+                          placeholder="Enter user email address"
+                        />
+                      </div>
 
-                      <select
-                        value={emailData[request._id]?.type || "available"}
-                        onChange={(e) =>
-                          updateEmailData(request._id, "type", e.target.value)
-                        }
-                        className="px-3 py-2 rounded bg-gray-800 text-white border border-gray-600 focus:border-yellow-400 focus:outline-none"
-                      >
-                        <option value="available">Movie Available</option>
-                        <option value="unavailable">Movie Unavailable</option>
-                        <option value="download">Download Link</option>
-                        <option value="other">Other</option>
-                      </select>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">
+                          Notification Type
+                        </label>
+                        <select
+                          value={emailData[request._id]?.type || "available"}
+                          onChange={(e) =>
+                            updateEmailData(request._id, "type", e.target.value)
+                          }
+                          className="px-3 py-2 bg-blue-600 text-white rounded focus:outline-none focus:bg-blue-700"
+                        >
+                          <option value="available">📥 Available</option>
+                          <option value="approved">✅ Approved</option>
+                        </select>
+                      </div>
 
                       <button
                         onClick={() => sendNotification(request._id)}
                         disabled={actionLoading[`email-${request._id}`]}
-                        className="px-4 py-2 bg-yellow-500 hover:bg-yellow-600 disabled:bg-gray-600 disabled:cursor-not-allowed rounded text-black font-semibold transition-colors"
+                        className="w-full px-4 py-2 bg-red-600 hover:bg-red-700 disabled:bg-gray-600 disabled:cursor-not-allowed rounded transition-colors"
                       >
                         {actionLoading[`email-${request._id}`]
                           ? "Sending..."
-                          : "Send Notification"}
+                          : `📤 Send ${
+                              emailData[request._id]?.type === "approved"
+                                ? "Approved"
+                                : "Available"
+                            } Notification`}
                       </button>
+
+                      <div className="bg-blue-900 border border-blue-700 rounded p-3 text-sm">
+                        <strong>Preview:</strong> This will send a{" "}
+                        <span className="text-blue-300">
+                          movie {emailData[request._id]?.type || "available"}
+                        </span>{" "}
+                        notification for "{request.title}" ({request.year})
+                      </div>
                     </div>
                   </div>
                 )}

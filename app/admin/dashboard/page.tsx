@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -13,22 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from "@/components/ui/chart";
-import {
-  Line,
-  LineChart,
-  Pie,
-  PieChart,
-  Cell,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Users,
   Film,
@@ -47,6 +32,9 @@ import {
   Download,
   Trash2,
   Eye,
+  RefreshCw,
+  Wifi,
+  WifiOff,
 } from "lucide-react";
 
 interface MovieRequest {
@@ -90,6 +78,12 @@ export default function AdminDashboard() {
   const [movieRequests, setMovieRequests] = useState<MovieRequest[]>([]);
   const [loadingRequests, setLoadingRequests] = useState(true);
   const [updatingRequest, setUpdatingRequest] = useState<string | null>(null);
+  const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [stats, setStats] = useState({
     totalUsers: 2100,
@@ -130,58 +124,58 @@ export default function AdminDashboard() {
   const router = useRouter();
   const { toast } = useToast();
 
-  const fetchMovieRequests = async () => {
-    try {
-      setLoadingRequests(true);
-      const response = await fetch("/api/request-movie", {
-        cache: "no-store",
-        headers: {
-          "Cache-Control": "no-cache, no-store, must-revalidate",
-        },
-      });
+  const fetchMovieRequests = useCallback(
+    async (showLoading = false) => {
+      try {
+        if (showLoading) setLoadingRequests(true);
 
-      if (response.ok) {
-        const requests = await response.json();
-        setMovieRequests(requests);
+        const response = await fetch("/api/request-movie", {
+          cache: "no-store",
+          headers: {
+            "Cache-Control": "no-cache, no-store, must-revalidate",
+          },
+        });
 
-        // Update stats with real data
-        const pendingCount = requests.filter(
-          (req: MovieRequest) => req.status === "pending"
-        ).length;
-        setStats((prev) => ({ ...prev, pendingRequests: pendingCount }));
+        if (response.ok) {
+          const requests = await response.json();
+          setMovieRequests(requests);
+          setLastUpdated(new Date());
+          setIsOnline(true);
 
-        // Update recent activity with latest requests
-        const latestRequests = requests
-          .slice(0, 3)
-          .map((req: MovieRequest, index: number) => ({
-            id: `req-${req._id}`,
-            type: "movie_request",
-            message: `Movie requested: ${req.title}`,
-            time: new Date(req.createdAt).toLocaleString(),
-          }));
+          // Update stats with real data
+          const pendingCount = requests.filter(
+            (req: MovieRequest) => req.status === "pending"
+          ).length;
+          setStats((prev) => ({ ...prev, pendingRequests: pendingCount }));
+        } else {
+          throw new Error(`HTTP ${response.status}`);
+        }
+      } catch (error) {
+        console.error("Failed to fetch movie requests:", error);
+        setIsOnline(false);
 
-        setRecentActivity((prev) => [
-          ...latestRequests,
-          ...prev
-            .filter((activity) => !String(activity.id).startsWith("req-"))
-            .slice(0, 4 - latestRequests.length),
-        ]);
+        if (showLoading) {
+          toast({
+            title: "Connection Error",
+            description: "Failed to load movie requests. Please try again.",
+            variant: "destructive",
+          });
+        }
+      } finally {
+        if (showLoading) setLoadingRequests(false);
       }
-    } catch (error) {
-      console.error("Failed to fetch movie requests:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load movie requests",
-        variant: "destructive",
-      });
-    } finally {
-      setLoadingRequests(false);
-    }
-  };
+    },
+    [toast]
+  );
 
   const updateRequestStatus = async (requestId: string, status: string) => {
+    if (!confirm(`Are you sure you want to ${status} this request?`)) {
+      return;
+    }
+
     try {
       setUpdatingRequest(requestId);
+
       const response = await fetch("/api/request-movie", {
         method: "PATCH",
         headers: {
@@ -190,20 +184,23 @@ export default function AdminDashboard() {
         body: JSON.stringify({ _id: requestId, status }),
       });
 
-      if (response.ok) {
+      const result = await response.json();
+
+      if (response.ok && result.success) {
         toast({
           title: "Success",
           description: `Request ${status} successfully`,
         });
-        fetchMovieRequests(); // Refresh data
+        await fetchMovieRequests(false);
       } else {
-        throw new Error("Failed to update request");
+        throw new Error(result.error || "Failed to update request");
       }
     } catch (error) {
       console.error("Error updating request:", error);
       toast({
         title: "Error",
-        description: "Failed to update request",
+        description:
+          error instanceof Error ? error.message : "Failed to update request",
         variant: "destructive",
       });
     } finally {
@@ -212,9 +209,16 @@ export default function AdminDashboard() {
   };
 
   const deleteRequest = async (requestId: string) => {
+    if (
+      !confirm(
+        "Are you sure you want to delete this request? This action cannot be undone."
+      )
+    ) {
+      return;
+    }
+
     try {
       setUpdatingRequest(requestId);
-      console.log("[v0] Attempting to delete request:", requestId); // Added debug logging
 
       const response = await fetch("/api/request-movie", {
         method: "DELETE",
@@ -224,26 +228,24 @@ export default function AdminDashboard() {
         body: JSON.stringify({ _id: requestId }),
       });
 
-      const result = await response.json(); // Parse response to get error details
+      const result = await response.json();
 
       if (response.ok && result.success) {
         toast({
           title: "Success",
           description: "Request deleted successfully",
         });
-        fetchMovieRequests(); // Refresh data
+        setSelectedRequests((prev) => prev.filter((id) => id !== requestId));
+        await fetchMovieRequests(false);
       } else {
-        const errorMessage = result.error || "Failed to delete request";
-        console.error("[v0] Delete request failed:", result);
-        throw new Error(errorMessage);
+        throw new Error(result.error || "Failed to delete request");
       }
     } catch (error) {
-      console.error("[v0] Error deleting request:", error);
-      const errorMessage =
-        error instanceof Error ? error.message : "Failed to delete request";
+      console.error("Error deleting request:", error);
       toast({
         title: "Error",
-        description: errorMessage, // Show specific error message
+        description:
+          error instanceof Error ? error.message : "Failed to delete request",
         variant: "destructive",
       });
     } finally {
@@ -251,55 +253,150 @@ export default function AdminDashboard() {
     }
   };
 
-  useEffect(() => {
-    if (localStorage.getItem("isAdmin") !== "true") {
-      router.push("/admin/login");
-    } else {
-      fetchMovieRequests();
+  const bulkUpdateStatus = async (requestIds: string[], status: string) => {
+    try {
+      setUpdatingRequest("bulk");
+
+      const promises = requestIds.map((id) =>
+        fetch("/api/request-movie", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ _id: id, status }),
+        })
+      );
+
+      const results = await Promise.allSettled(promises);
+      const successful = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
+
+      toast({
+        title: "Bulk Update Complete",
+        description: `${successful}/${requestIds.length} requests updated successfully`,
+      });
+
+      setSelectedRequests([]);
+      fetchMovieRequests(false);
+    } catch (error) {
+      console.error("Bulk update error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to update some requests",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingRequest(null);
     }
-  }, [router]);
+  };
+
+  const bulkDelete = async (requestIds: string[]) => {
+    try {
+      setUpdatingRequest("bulk");
+
+      const promises = requestIds.map((id) =>
+        fetch("/api/request-movie", {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ _id: id }),
+        })
+      );
+
+      const results = await Promise.allSettled(promises);
+      const successful = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
+
+      toast({
+        title: "Bulk Delete Complete",
+        description: `${successful}/${requestIds.length} requests deleted successfully`,
+      });
+
+      setSelectedRequests([]);
+      fetchMovieRequests(false);
+    } catch (error) {
+      console.error("Bulk delete error:", error);
+      toast({
+        title: "Error",
+        description: "Failed to delete some requests",
+        variant: "destructive",
+      });
+    } finally {
+      setUpdatingRequest(null);
+    }
+  };
 
   const handleLogout = async () => {
     try {
+      // Call logout API to clear JWT cookie
       await fetch("/api/admin/logout", {
         method: "POST",
+        credentials: "include",
       });
-
-      localStorage.removeItem("isAdmin");
-
-      toast({
-        title: "Logged out successfully",
-        description: "You have been logged out of the admin panel.",
-      });
-
-      router.push("/admin/login");
     } catch (error) {
-      console.error("Logout error:", error);
+      console.error("Logout API error:", error);
+    } finally {
+      // Always clear localStorage and redirect regardless of API response
       localStorage.removeItem("isAdmin");
-      router.push("/admin/login");
+      window.location.href = "/admin/login";
     }
   };
+
+  useEffect(() => {
+    if (localStorage.getItem("isAdmin") !== "true") {
+      router.push("/admin/login");
+      return;
+    }
+
+    fetchMovieRequests(true);
+
+    if (autoRefresh) {
+      intervalRef.current = setInterval(() => {
+        fetchMovieRequests(false);
+      }, 30000); // Refresh every 30 seconds
+    }
+
+    return () => {
+      if (intervalRef.current) clearInterval(intervalRef.current);
+      if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+    };
+  }, [router, fetchMovieRequests, autoRefresh]);
+
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      fetchMovieRequests(false);
+    };
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
+
+    return () => {
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [fetchMovieRequests]);
 
   const movieRequestsData = [
     {
       status: "Pending",
       count: movieRequests.filter((req) => req.status === "pending").length,
-      color: "hsl(var(--chart-4))",
+      color: "bg-yellow-500",
     },
     {
       status: "Approved",
       count: movieRequests.filter((req) => req.status === "approved").length,
-      color: "hsl(var(--chart-3))",
+      color: "bg-green-500",
     },
     {
       status: "Downloaded",
       count: movieRequests.filter((req) => req.status === "downloaded").length,
-      color: "hsl(var(--chart-1))",
+      color: "bg-blue-500",
     },
     {
       status: "Rejected",
       count: movieRequests.filter((req) => req.status === "rejected").length,
-      color: "hsl(var(--chart-5))",
+      color: "bg-red-500",
     },
   ];
 
@@ -355,8 +452,47 @@ export default function AdminDashboard() {
             <Badge variant="secondary" className="bg-primary/10 text-primary">
               Dashboard
             </Badge>
+            <div className="flex items-center gap-2">
+              {isOnline ? (
+                <div className="flex items-center gap-1 text-green-600">
+                  <Wifi className="w-4 h-4" />
+                  <span className="text-xs">Live</span>
+                </div>
+              ) : (
+                <div className="flex items-center gap-1 text-red-600">
+                  <WifiOff className="w-4 h-4" />
+                  <span className="text-xs">Offline</span>
+                </div>
+              )}
+              <span className="text-xs text-muted-foreground">
+                Updated: {lastUpdated.toLocaleTimeString()}
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fetchMovieRequests(true)}
+              disabled={loadingRequests}
+              className="gap-2"
+            >
+              <RefreshCw
+                className={`w-4 h-4 ${loadingRequests ? "animate-spin" : ""}`}
+              />
+              Refresh
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setAutoRefresh(!autoRefresh)}
+              className={`gap-2 ${
+                autoRefresh ? "bg-green-50 text-green-700" : ""
+              }`}
+            >
+              <Activity className="w-4 h-4" />
+              Auto: {autoRefresh ? "ON" : "OFF"}
+            </Button>
             <Button
               variant="outline"
               size="sm"
@@ -426,7 +562,7 @@ export default function AdminDashboard() {
         <main className="flex-1 p-6 space-y-6">
           {/* Metrics Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="metric-card">
+            <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Users
@@ -440,10 +576,16 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">
                   +12% from last month
                 </p>
+                <div className="w-full bg-muted rounded-full h-1 mt-2">
+                  <div
+                    className="bg-blue-500 h-1 rounded-full transition-all duration-1000"
+                    style={{ width: "85%" }}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="metric-card">
+            <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Active Users
@@ -457,10 +599,16 @@ export default function AdminDashboard() {
                 <p className="text-xs text-muted-foreground">
                   +8% from last month
                 </p>
+                <div className="w-full bg-muted rounded-full h-1 mt-2">
+                  <div
+                    className="bg-green-500 h-1 rounded-full transition-all duration-1000"
+                    style={{ width: "78%" }}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="metric-card">
+            <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Movies
@@ -472,10 +620,16 @@ export default function AdminDashboard() {
                   {stats.totalMovies.toLocaleString()}
                 </div>
                 <p className="text-xs text-muted-foreground">+25 this week</p>
+                <div className="w-full bg-muted rounded-full h-1 mt-2">
+                  <div
+                    className="bg-purple-500 h-1 rounded-full transition-all duration-1000"
+                    style={{ width: "92%" }}
+                  />
+                </div>
               </CardContent>
             </Card>
 
-            <Card className="metric-card">
+            <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Pending Requests
@@ -487,6 +641,17 @@ export default function AdminDashboard() {
                   {stats.pendingRequests}
                 </div>
                 <p className="text-xs text-muted-foreground">Needs attention</p>
+                <div className="w-full bg-muted rounded-full h-1 mt-2">
+                  <div
+                    className="bg-yellow-500 h-1 rounded-full transition-all duration-1000"
+                    style={{
+                      width: `${Math.min(
+                        (stats.pendingRequests / 10) * 100,
+                        100
+                      )}%`,
+                    }}
+                  />
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -503,13 +668,45 @@ export default function AdminDashboard() {
             <TabsContent value="requests" className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Film className="w-5 h-5" />
-                    Movie Requests Management
-                  </CardTitle>
-                  <CardDescription>
-                    Monitor and manage user movie requests
-                  </CardDescription>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <CardTitle className="flex items-center gap-2">
+                        <Film className="w-5 h-5" />
+                        Movie Requests Management
+                      </CardTitle>
+                      <CardDescription>
+                        Monitor and manage user movie requests
+                      </CardDescription>
+                    </div>
+                    {selectedRequests.length > 0 && (
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">
+                          {selectedRequests.length} selected
+                        </Badge>
+                        <Button
+                          size="sm"
+                          onClick={() =>
+                            bulkUpdateStatus(selectedRequests, "approved")
+                          }
+                          disabled={updatingRequest === "bulk"}
+                          className="gap-1 bg-green-600 hover:bg-green-700"
+                        >
+                          <CheckCircle className="w-4 h-4" />
+                          Approve All
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => bulkDelete(selectedRequests)}
+                          disabled={updatingRequest === "bulk"}
+                          className="gap-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          Delete All
+                        </Button>
+                      </div>
+                    )}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {loadingRequests ? (
@@ -526,31 +723,50 @@ export default function AdminDashboard() {
                       {movieRequests.map((request) => (
                         <div
                           key={request._id}
-                          className="flex items-center justify-between p-4 rounded-lg border bg-card/50"
+                          className="flex items-center justify-between p-4 rounded-lg border bg-card/50 hover:bg-card/70 transition-colors"
                         >
-                          <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <h4 className="font-semibold text-foreground">
-                                {request.title}
-                              </h4>
-                              <Badge className={getStatusBadge(request.status)}>
-                                {request.status}
-                              </Badge>
-                            </div>
-                            <div className="text-sm text-muted-foreground space-y-1">
-                              <p>
-                                Year: {request.year || "N/A"} • User:{" "}
-                                {request.user}
-                              </p>
-                              <p>
-                                Requested:{" "}
-                                {new Date(request.createdAt).toLocaleString()}
-                              </p>
-                              {request.adminNotes && (
-                                <p className="text-xs bg-muted p-2 rounded">
-                                  Notes: {request.adminNotes}
+                          <div className="flex items-center gap-3">
+                            <Checkbox
+                              checked={selectedRequests.includes(request._id)}
+                              onCheckedChange={(checked) => {
+                                if (checked) {
+                                  setSelectedRequests((prev) => [
+                                    ...prev,
+                                    request._id,
+                                  ]);
+                                } else {
+                                  setSelectedRequests((prev) =>
+                                    prev.filter((id) => id !== request._id)
+                                  );
+                                }
+                              }}
+                            />
+                            <div className="flex-1">
+                              <div className="flex items-center gap-3 mb-2">
+                                <h4 className="font-semibold text-foreground">
+                                  {request.title}
+                                </h4>
+                                <Badge
+                                  className={getStatusBadge(request.status)}
+                                >
+                                  {request.status}
+                                </Badge>
+                              </div>
+                              <div className="text-sm text-muted-foreground space-y-1">
+                                <p>
+                                  Year: {request.year || "N/A"} • User:{" "}
+                                  {request.user}
                                 </p>
-                              )}
+                                <p>
+                                  Requested:{" "}
+                                  {new Date(request.createdAt).toLocaleString()}
+                                </p>
+                                {request.adminNotes && (
+                                  <p className="text-xs bg-muted p-2 rounded">
+                                    Notes: {request.adminNotes}
+                                  </p>
+                                )}
+                              </div>
                             </div>
                           </div>
 
@@ -614,7 +830,7 @@ export default function AdminDashboard() {
 
             <TabsContent value="analytics" className="space-y-6">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card className="chart-container">
+                <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <CardTitle>User Growth</CardTitle>
                     <CardDescription>
@@ -622,44 +838,45 @@ export default function AdminDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer
-                      config={{
-                        users: {
-                          label: "Total Users",
-                          color: "hsl(var(--chart-1))",
-                        },
-                        active: {
-                          label: "Active Users",
-                          color: "hsl(var(--chart-2))",
-                        },
-                      }}
-                      className="h-[300px]"
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <LineChart data={userGrowthData}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="month" />
-                          <YAxis />
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                          <Line
-                            type="monotone"
-                            dataKey="users"
-                            stroke="var(--color-users)"
-                            strokeWidth={2}
-                          />
-                          <Line
-                            type="monotone"
-                            dataKey="active"
-                            stroke="var(--color-active)"
-                            strokeWidth={2}
-                          />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
+                    <div className="space-y-4">
+                      {userGrowthData.map((data, index) => (
+                        <div
+                          key={data.month}
+                          className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
+                        >
+                          <div className="flex items-center gap-3">
+                            <Badge variant="secondary" className="min-w-[3rem]">
+                              {data.month}
+                            </Badge>
+                            <div>
+                              <p className="text-sm font-medium">
+                                Total: {data.users.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Active: {data.active.toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="w-32 bg-muted rounded-full h-3 relative overflow-hidden">
+                            <div
+                              className="bg-gradient-to-r from-blue-500 to-green-500 h-3 rounded-full transition-all duration-1000 ease-out"
+                              style={{
+                                width: `${(data.active / data.users) * 100}%`,
+                              }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <span className="text-xs font-medium text-white mix-blend-difference">
+                                {Math.round((data.active / data.users) * 100)}%
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </CardContent>
                 </Card>
 
-                <Card className="chart-container">
+                <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <CardTitle>Movie Requests</CardTitle>
                     <CardDescription>
@@ -667,45 +884,45 @@ export default function AdminDashboard() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <ChartContainer
-                      config={{
-                        pending: {
-                          label: "Pending",
-                          color: "hsl(var(--chart-4))",
-                        },
-                        approved: {
-                          label: "Approved",
-                          color: "hsl(var(--chart-3))",
-                        },
-                        downloaded: {
-                          label: "Downloaded",
-                          color: "hsl(var(--chart-1))",
-                        },
-                        rejected: {
-                          label: "Rejected",
-                          color: "hsl(var(--chart-5))",
-                        },
-                      }}
-                      className="h-[300px]"
-                    >
-                      <ResponsiveContainer width="100%" height="100%">
-                        <PieChart>
-                          <Pie
-                            data={movieRequestsData}
-                            cx="50%"
-                            cy="50%"
-                            outerRadius={80}
-                            dataKey="count"
-                            label={({ status, count }) => `${status}: ${count}`}
-                          >
-                            {movieRequestsData.map((entry, index) => (
-                              <Cell key={`cell-${index}`} fill={entry.color} />
-                            ))}
-                          </Pie>
-                          <ChartTooltip content={<ChartTooltipContent />} />
-                        </PieChart>
-                      </ResponsiveContainer>
-                    </ChartContainer>
+                    <div className="space-y-4">
+                      {movieRequestsData.map((data) => {
+                        const total = movieRequestsData.reduce(
+                          (sum, item) => sum + item.count,
+                          0
+                        );
+                        const percentage =
+                          total > 0 ? (data.count / total) * 100 : 0;
+
+                        return (
+                          <div key={data.status} className="space-y-2">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`w-4 h-4 rounded-full ${data.color} shadow-sm`}
+                                />
+                                <span className="font-medium">
+                                  {data.status}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Badge variant="secondary">{data.count}</Badge>
+                                <span className="text-xs text-muted-foreground">
+                                  {percentage.toFixed(1)}%
+                                </span>
+                              </div>
+                            </div>
+                            <div className="w-full bg-muted rounded-full h-3 relative overflow-hidden">
+                              <div
+                                className={`h-3 rounded-full transition-all duration-1000 ease-out ${data.color}`}
+                                style={{
+                                  width: `${Math.max(percentage, 2)}%`,
+                                }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </CardContent>
                 </Card>
               </div>

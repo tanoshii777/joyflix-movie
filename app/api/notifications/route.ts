@@ -14,7 +14,6 @@ export async function POST(req: Request) {
       );
     }
 
-    // Normalize request object
     const normalizedRequest = {
       id: request._id || request.id || Math.floor(Math.random() * 100000),
       movieId: request.movieId || "unknown",
