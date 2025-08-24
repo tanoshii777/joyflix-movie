@@ -10,13 +10,13 @@
 # production
 /build
 
-# debug
+# debug logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files
+# environment variables
 .env*
 
 # vercel
@@ -26,5 +26,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-#Exclude the MOVIES FILES folder
+# Exclude the VIDEOS folder in public
 public/VIDEOS
