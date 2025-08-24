@@ -9,7 +9,66 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Eye, EyeOff, CheckCircle, User, Mail, Lock, UserPlus } from "lucide-react"
+import { Loader2, Eye, EyeOff, CheckCircle, User, Mail, Lock, UserPlus, AlertTriangle, Check, X } from "lucide-react"
+import { toast } from "sonner"
+
+const PasswordStrengthIndicator = ({ password }: { password: string }) => {
+  const checks = [
+    { label: "At least 8 characters", test: (p: string) => p.length >= 8 },
+    { label: "One uppercase letter", test: (p: string) => /[A-Z]/.test(p) },
+    { label: "One lowercase letter", test: (p: string) => /[a-z]/.test(p) },
+    { label: "One number", test: (p: string) => /\d/.test(p) },
+    { label: "One special character", test: (p: string) => /[!@#$%^&*(),.?":{}|<>]/.test(p) },
+  ]
+
+  const passedChecks = checks.filter((check) => check.test(password)).length
+  const strength = passedChecks === 0 ? 0 : (passedChecks / checks.length) * 100
+
+  const getStrengthColor = () => {
+    if (strength < 40) return "bg-red-500"
+    if (strength < 80) return "bg-yellow-500"
+    return "bg-green-500"
+  }
+
+  const getStrengthText = () => {
+    if (strength < 40) return "Weak"
+    if (strength < 80) return "Medium"
+    return "Strong"
+  }
+
+  if (!password) return null
+
+  return (
+    <div className="space-y-2 mt-2">
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-muted-foreground">Password strength:</span>
+        <span
+          className={`font-medium ${strength < 40 ? "text-red-500" : strength < 80 ? "text-yellow-500" : "text-green-500"}`}
+        >
+          {getStrengthText()}
+        </span>
+      </div>
+      <div className="w-full bg-muted rounded-full h-1">
+        <div
+          className={`h-1 rounded-full transition-all duration-300 ${getStrengthColor()}`}
+          style={{ width: `${strength}%` }}
+        />
+      </div>
+      <div className="space-y-1">
+        {checks.map((check, index) => (
+          <div key={index} className="flex items-center gap-2 text-xs">
+            {check.test(password) ? (
+              <Check className="w-3 h-3 text-green-500" />
+            ) : (
+              <X className="w-3 h-3 text-muted-foreground" />
+            )}
+            <span className={check.test(password) ? "text-green-500" : "text-muted-foreground"}>{check.label}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
 
 export default function RegisterPage() {
   const [fullName, setFullName] = useState("")
@@ -23,10 +82,6 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const router = useRouter()
-
-  const validatePassword = (pass: string) => {
-    return pass.length >= 6
-  }
 
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -74,12 +129,6 @@ export default function RegisterPage() {
       return
     }
 
-    if (!validatePassword(password)) {
-      setError("Password must be at least 6 characters long")
-      setLoading(false)
-      return
-    }
-
     if (password !== confirmPassword) {
       setError("Passwords do not match")
       setLoading(false)
@@ -97,16 +146,20 @@ export default function RegisterPage() {
 
       if (!res.ok) {
         setError(data.error || "Registration failed")
+        toast.error(data.error || "Registration failed")
         return
       }
 
-      setSuccess("Account created successfully! Redirecting to login...")
+      setSuccess(data.message || "Account created successfully!")
+      toast.success("Account created successfully! Redirecting to login...")
+
       setTimeout(() => {
         router.push("/login")
       }, 2000)
     } catch (err) {
-      console.error(err)
-      setError("Network error. Please try again.")
+      console.error("Registration error:", err)
+      setError("Network error. Please check your connection and try again.")
+      toast.error("Connection failed - please try again")
     } finally {
       setLoading(false)
     }
@@ -136,6 +189,7 @@ export default function RegisterPage() {
             <form onSubmit={handleRegister} className="space-y-5">
               {error && (
                 <Alert className="border-destructive/50 bg-destructive/10 backdrop-blur-sm">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
                   <AlertDescription className="text-destructive font-medium">{error}</AlertDescription>
                 </Alert>
               )}
@@ -160,6 +214,7 @@ export default function RegisterPage() {
                   placeholder="Enter your full name"
                   className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12"
                   disabled={loading}
+                  autoComplete="name"
                 />
               </div>
 
@@ -176,6 +231,7 @@ export default function RegisterPage() {
                   placeholder="Choose a username"
                   className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12"
                   disabled={loading}
+                  autoComplete="username"
                 />
               </div>
 
@@ -192,6 +248,7 @@ export default function RegisterPage() {
                   placeholder="Enter your email"
                   className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12"
                   disabled={loading}
+                  autoComplete="email"
                 />
               </div>
 
@@ -209,15 +266,18 @@ export default function RegisterPage() {
                     placeholder="Create a password"
                     className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12 pr-12"
                     disabled={loading}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                    disabled={loading}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                <PasswordStrengthIndicator password={password} />
               </div>
 
               <div className="space-y-2">
@@ -234,26 +294,45 @@ export default function RegisterPage() {
                     placeholder="Confirm your password"
                     className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12 pr-12"
                     disabled={loading}
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                    disabled={loading}
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                {confirmPassword && password !== confirmPassword && (
+                  <p className="text-xs text-red-500 flex items-center gap-1">
+                    <X className="w-3 h-3" />
+                    Passwords do not match
+                  </p>
+                )}
+                {confirmPassword && password === confirmPassword && (
+                  <p className="text-xs text-green-500 flex items-center gap-1">
+                    <Check className="w-3 h-3" />
+                    Passwords match
+                  </p>
+                )}
               </div>
 
               <Button
                 type="submit"
                 disabled={loading}
-                className="button-hover w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
+                className="button-hover w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Creating account...
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Redirecting...
                   </>
                 ) : (
                   "Create Account"
@@ -266,6 +345,19 @@ export default function RegisterPage() {
               <Link href="/login" className="text-primary hover:text-primary/80 font-semibold transition-colors">
                 Sign in here
               </Link>
+            </div>
+
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">
+                By creating an account, you agree to our{" "}
+                <Link href="/terms" className="text-primary hover:text-primary/80 transition-colors">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-primary hover:text-primary/80 transition-colors">
+                  Privacy Policy
+                </Link>
+              </p>
             </div>
           </CardContent>
         </Card>

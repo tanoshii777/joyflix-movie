@@ -9,13 +9,16 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
-import { Loader2, Eye, EyeOff, Lock, User } from "lucide-react"
+import { Loader2, Eye, EyeOff, Lock, User, CheckCircle, AlertTriangle } from "lucide-react"
+import { toast } from "sonner"
 
 export default function LoginPage() {
   const [identifier, setIdentifier] = useState("")
   const [password, setPassword] = useState("")
+  const [rememberMe, setRememberMe] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const [success, setSuccess] = useState("")
   const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
@@ -23,6 +26,7 @@ export default function LoginPage() {
     e.preventDefault()
     setLoading(true)
     setError("")
+    setSuccess("")
 
     if (!identifier.trim()) {
       setError("Email or username is required")
@@ -40,22 +44,42 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ identifier, password }),
+        body: JSON.stringify({ identifier, password, rememberMe }),
       })
 
       const data = await res.json()
 
       if (!res.ok) {
-        setError(data.error || "Login failed")
+        if (res.status === 429) {
+          setError(data.error || "Too many login attempts. Please try again later.")
+          toast.error("Account temporarily locked due to multiple failed attempts")
+        } else if (res.status === 401) {
+          setError(data.error || "Invalid credentials")
+          toast.error("Login failed - please check your credentials")
+        } else {
+          setError(data.error || "Login failed")
+          toast.error("Login failed")
+        }
         return
       }
 
+      setSuccess(data.message || "Login successful!")
+      toast.success(data.message || "Welcome back!")
+
       localStorage.setItem("auth", "true")
       localStorage.setItem("user", JSON.stringify(data.user))
-      router.push("/dashboard")
+
+      if (data.user.theme) {
+        localStorage.setItem("theme", data.user.theme)
+      }
+
+      setTimeout(() => {
+        router.push("/")
+      }, 1500)
     } catch (err) {
-      console.error(err)
-      setError("Network error. Please try again.")
+      console.error("Login error:", err)
+      setError("Network error. Please check your connection and try again.")
+      toast.error("Connection failed - please try again")
     } finally {
       setLoading(false)
     }
@@ -85,7 +109,15 @@ export default function LoginPage() {
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <Alert className="border-destructive/50 bg-destructive/10 backdrop-blur-sm">
+                  <AlertTriangle className="h-4 w-4 text-destructive" />
                   <AlertDescription className="text-destructive font-medium">{error}</AlertDescription>
+                </Alert>
+              )}
+
+              {success && (
+                <Alert className="border-green-500/50 bg-green-500/10 backdrop-blur-sm">
+                  <CheckCircle className="h-4 w-4 text-green-500" />
+                  <AlertDescription className="text-green-500 font-medium">{success}</AlertDescription>
                 </Alert>
               )}
 
@@ -102,6 +134,7 @@ export default function LoginPage() {
                   placeholder="Enter your email or username"
                   className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12"
                   disabled={loading}
+                  autoComplete="username"
                 />
               </div>
 
@@ -119,11 +152,13 @@ export default function LoginPage() {
                     placeholder="Enter your password"
                     className="input-focus bg-input/50 border-border/50 text-foreground placeholder:text-muted-foreground focus:ring-primary focus:border-primary h-12 pr-12"
                     disabled={loading}
+                    autoComplete="current-password"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors"
+                    disabled={loading}
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -134,11 +169,17 @@ export default function LoginPage() {
                 <label className="flex items-center space-x-2 text-muted-foreground cursor-pointer">
                   <input
                     type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
                     className="rounded border-border/50 bg-input/50 text-primary focus:ring-primary focus:ring-offset-0"
+                    disabled={loading}
                   />
-                  <span>Remember me</span>
+                  <span>Remember me for 30 days</span>
                 </label>
-                <Link href="#" className="text-primary hover:text-primary/80 font-medium transition-colors">
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:text-primary/80 font-medium transition-colors"
+                >
                   Forgot password?
                 </Link>
               </div>
@@ -146,12 +187,17 @@ export default function LoginPage() {
               <Button
                 type="submit"
                 disabled={loading}
-                className="button-hover w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold"
+                className="button-hover w-full bg-primary hover:bg-primary/90 text-primary-foreground h-12 text-base font-semibold disabled:opacity-50"
               >
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-5 w-5 animate-spin" />
                     Signing in...
+                  </>
+                ) : success ? (
+                  <>
+                    <CheckCircle className="mr-2 h-5 w-5" />
+                    Redirecting...
                   </>
                 ) : (
                   "Sign In"
@@ -164,6 +210,19 @@ export default function LoginPage() {
               <Link href="/register" className="text-primary hover:text-primary/80 font-semibold transition-colors">
                 Create an account
               </Link>
+            </div>
+
+            <div className="text-center">
+              <p className="text-xs text-muted-foreground">
+                By signing in, you agree to our{" "}
+                <Link href="/terms" className="text-primary hover:text-primary/80 transition-colors">
+                  Terms of Service
+                </Link>{" "}
+                and{" "}
+                <Link href="/privacy" className="text-primary hover:text-primary/80 transition-colors">
+                  Privacy Policy
+                </Link>
+              </p>
             </div>
           </CardContent>
         </Card>

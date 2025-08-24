@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { Volume2, VolumeX } from "lucide-react";
-import type { HeroProps } from "../types/movie";
+import type { HeroProps } from "@/app/types/movie";
 
 export default function Hero({ movies }: HeroProps) {
   const [featuredMovie, setFeaturedMovie] = useState(movies[0]);
@@ -24,12 +24,8 @@ export default function Hero({ movies }: HeroProps) {
 
   // Jump video to "climax" start time
   useEffect(() => {
-    if (videoRef.current && featuredMovie?.startTime !== undefined) {
+    if (videoRef.current && featuredMovie?.startTime) {
       videoRef.current.currentTime = featuredMovie.startTime;
-
-      videoRef.current.play().catch((err) => {
-        console.warn("Autoplay interrupted:", err);
-      });
     }
   }, [featuredMovie]);
 
@@ -38,6 +34,7 @@ export default function Hero({ movies }: HeroProps) {
       {/* 🎥 Background Video */}
       <video
         ref={videoRef}
+        key={featuredMovie.id}
         autoPlay
         muted={isMuted}
         loop

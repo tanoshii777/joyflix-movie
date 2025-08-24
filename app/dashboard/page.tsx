@@ -4,13 +4,13 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import Image from "next/image"
-import { User, Heart, Star, Clock, Play, Settings } from "lucide-react"
+import { User, Heart, Star, Clock, Play, Settings, Bookmark } from "lucide-react"
 import { movies as localMovies } from "../moviesData"
 import MovieCard from "../components/MovieCard"
 import NavbarWrapper from "../components/NavbarWrapper"
-import Footer from "../components/Footer"
 import { useFavorites } from "../hooks/useFavorites"
 import { useRatings } from "../hooks/useRatings"
+import { useWatchlist } from "../hooks/useWatchlist"
 
 type UserType = {
   email: string
@@ -22,6 +22,7 @@ export default function DashboardPage() {
   const router = useRouter()
   const { favorites } = useFavorites()
   const { ratings } = useRatings()
+  const { watchlist } = useWatchlist()
 
   const [user, setUser] = useState<UserType | null>(null)
   const [authChecked, setAuthChecked] = useState(false)
@@ -87,7 +88,8 @@ export default function DashboardPage() {
 
   if (!user) return null
 
-  const favoriteMovies = localMovies.filter((movie) => favorites.includes(Number(movie.id))).slice(0, 6)
+  const favoriteMovies = localMovies.filter((movie) => favorites.includes(movie.id.toString())).slice(0, 6)
+  const watchlistMovies = localMovies.filter((movie) => watchlist.includes(movie.id.toString())).slice(0, 6)
   const ratedMovies = localMovies.filter((movie) => ratings[Number(movie.id)]).slice(0, 6)
 
   return (
@@ -117,6 +119,10 @@ export default function DashboardPage() {
                 <span className="flex items-center gap-1">
                   <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-red-500" />
                   {favorites.length} Favorites
+                </span>
+                <span className="flex items-center gap-1">
+                  <Bookmark className="w-3 h-3 sm:w-4 sm:h-4 text-blue-500" />
+                  {watchlist.length} Watchlist
                 </span>
                 <span className="flex items-center gap-1">
                   <Star className="w-3 h-3 sm:w-4 sm:h-4 text-yellow-500" />
@@ -180,6 +186,27 @@ export default function DashboardPage() {
           </section>
         )}
 
+        {watchlistMovies.length > 0 && (
+          <section className="py-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <Bookmark className="w-6 h-6 text-blue-500" />
+                <h2 className="text-2xl font-semibold">My Watchlist</h2>
+              </div>
+              <Link href="/watchlist" className="text-red-500 hover:text-red-400 text-sm">
+                View All
+              </Link>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+              {watchlistMovies.map((movie) => (
+                <div key={movie.id} className="relative">
+                  <MovieCard movie={movie} onSelect={() => router.push(`/watch/${movie.id}`)} />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+
         {ratedMovies.length > 0 && (
           <section className="py-8">
             <div className="flex items-center justify-between mb-6">
@@ -225,28 +252,7 @@ export default function DashboardPage() {
             </div>
           </section>
         )}
-
-        {favorites.length === 0 && Object.keys(ratings).length === 0 && continueWatching.length === 0 && (
-          <section className="py-16 text-center">
-            <div className="max-w-md mx-auto">
-              <User className="w-16 h-16 text-gray-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">Welcome to Your Dashboard</h3>
-              <p className="text-gray-400 mb-6">
-                Start watching movies to see your favorites, ratings, and continue watching here.
-              </p>
-              <Link
-                href="/"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
-              >
-                <Play className="w-4 h-4" />
-                Browse Movies
-              </Link>
-            </div>
-          </section>
-        )}
       </div>
-
-      <Footer />
     </main>
   )
 }

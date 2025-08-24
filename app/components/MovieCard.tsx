@@ -1,12 +1,12 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect, useState } from "react"
 import Image from "next/image"
 import { toast } from "sonner"
 import { useWatchlist } from "@/app/hooks/useWatchlist"
-import { Bookmark, BookmarkCheck } from "lucide-react"
+import { useFavorites } from "@/app/hooks/useFavorites"
+import { Bookmark, BookmarkCheck, Heart } from "lucide-react"
 
 export default function MovieCard({
   movie,
@@ -16,7 +16,8 @@ export default function MovieCard({
   onSelect: (m: any) => void
 }) {
   const [progress, setProgress] = useState<number>(0)
-  const { addToWatchlist, removeFromWatchlist, isInWatchlist, loading } = useWatchlist()
+  const { addToWatchlist, removeFromWatchlist, isInWatchlist, loading: watchlistLoading } = useWatchlist()
+  const { toggleFavorite, isInFavorites, loading: favoritesLoading } = useFavorites()
 
   useEffect(() => {
     const savedProgress = localStorage.getItem("watch-progress")
@@ -33,13 +34,18 @@ export default function MovieCard({
   }
 
   const handleWatchlistToggle = (e: React.MouseEvent) => {
-    e.stopPropagation() // Prevent movie selection when clicking watchlist button
+    e.stopPropagation()
 
     if (isInWatchlist(movie.id)) {
       removeFromWatchlist(movie.id, movie.title)
     } else {
       addToWatchlist(movie.id, movie.title)
     }
+  }
+
+  const handleFavoriteToggle = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    toggleFavorite(movie.id, movie.title)
   }
 
   async function handleRequest() {
@@ -56,16 +62,16 @@ export default function MovieCard({
       })
 
       if (res.ok) {
-        toast(`🎬 Request sent`, {
+        toast.success("Request sent", {
           description: `${movie.title} has been requested successfully.`,
         })
       } else {
-        toast(`❌ Error`, {
+        toast.error("Error", {
           description: "Something went wrong while sending your request.",
         })
       }
     } catch (err) {
-      toast(`⚠️ Network Error`, {
+      toast.error("Network Error", {
         description: "Failed to connect to server. Try again later.",
       })
     }
@@ -113,26 +119,35 @@ export default function MovieCard({
 
       {movie.year && (
         <>
-          <div className="absolute top-2 right-2 hidden md:flex items-center">
+          <div className="absolute top-2 right-2 hidden md:flex items-center gap-1">
             {/* Year badge */}
             <span className="text-white text-xs px-2 py-1 rounded-full bg-black/60">{movie.year}</span>
+
+            <button
+              onClick={handleFavoriteToggle}
+              disabled={favoritesLoading}
+              className="
+                bg-red-500/70 hover:bg-red-600/80 text-white rounded-full
+                transition-all duration-200 hover:scale-110 disabled:opacity-50
+                p-1.5
+              "
+              title={isInFavorites(movie.id) ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <Heart size={14} className={`${isInFavorites(movie.id) ? "fill-current" : ""}`} />
+            </button>
 
             {/* Watchlist button */}
             <button
               onClick={handleWatchlistToggle}
-              disabled={loading}
+              disabled={watchlistLoading}
               className="
-          bg-green-400 hover:bg-pink-600/50 text-white rounded-full ml-1
-          transition-all duration-200 hover:scale-110 disabled:opacity-50
-          p-1.5 md:p-2
-        "
+                bg-green-500/70 hover:bg-green-600/80 text-white rounded-full
+                transition-all duration-200 hover:scale-110 disabled:opacity-50
+                p-1.5
+              "
               title={isInWatchlist(movie.id) ? "Remove from Watchlist" : "Add to Watchlist"}
             >
-              {isInWatchlist(movie.id) ? (
-                <BookmarkCheck size={14} className="text-red-500 md:w-5 md:h-5" />
-              ) : (
-                <Bookmark size={14} className="md:w-5 md:h-5" />
-              )}
+              {isInWatchlist(movie.id) ? <BookmarkCheck size={14} /> : <Bookmark size={14} />}
             </button>
           </div>
 
@@ -140,18 +155,31 @@ export default function MovieCard({
             <span className="text-white text-xs px-2 py-1 rounded-full bg-black/50">{movie.year}</span>
           </div>
 
-          <div className="absolute bottom-2 right-2 flex md:hidden">
+          <div className="absolute bottom-2 right-2 flex md:hidden gap-1">
+            <button
+              onClick={handleFavoriteToggle}
+              disabled={favoritesLoading}
+              className="
+                bg-red-500/70 hover:bg-red-600/80 text-white rounded-full
+                transition-all duration-200 hover:scale-110 disabled:opacity-50
+                p-2
+              "
+              title={isInFavorites(movie.id) ? "Remove from Favorites" : "Add to Favorites"}
+            >
+              <Heart size={16} className={`${isInFavorites(movie.id) ? "fill-current" : ""}`} />
+            </button>
+
             <button
               onClick={handleWatchlistToggle}
-              disabled={loading}
+              disabled={watchlistLoading}
               className="
-          bg-green-500/70 hover:bg-pink-400 text-white rounded-full
-          transition-all duration-200 hover:scale-110 disabled:opacity-50
-          p-2
-        "
+                bg-green-500/70 hover:bg-green-600/80 text-white rounded-full
+                transition-all duration-200 hover:scale-110 disabled:opacity-50
+                p-2
+              "
               title={isInWatchlist(movie.id) ? "Remove from Watchlist" : "Add to Watchlist"}
             >
-              {isInWatchlist(movie.id) ? <BookmarkCheck size={16} className="text-red-500" /> : <Bookmark size={16} />}
+              {isInWatchlist(movie.id) ? <BookmarkCheck size={16} /> : <Bookmark size={16} />}
             </button>
           </div>
         </>
