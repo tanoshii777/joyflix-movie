@@ -26,6 +26,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-
-#Exclude File from uploading in the github
-public/MOVIES
+#Exclude the MOVIES FILES folder
+public/VIDEOS
