@@ -339,4 +339,16 @@ export const movies: Movie[] = [
     description:
       "A Formula One driver comes out of retirement to mentor and team up with a younger driver.",
   },
+  {
+    id: 31,
+    title: "Untold",
+    year: 2025,
+    thumbnail: "/posters/untold.png",
+    video: "/movies/Untold.mp4",
+    startTime: 120,
+    category: "Horror",
+    subtitle: "",
+    description:
+      "TV journalist Vivian Vera hosts (Untold) documentary series. After a traumatic story investigation, strange events plague her and her crew, forcing her to confront her past secrets to uncover the truth.",
+  },
 ];
