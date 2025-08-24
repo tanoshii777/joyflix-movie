@@ -27,5 +27,5 @@ yarn-error.log*
 next-env.d.ts
 
 
-#exclude MOVIES Folder go ignore to github push
-/public/MOVIES/
+#Exclude File from uploading in the github
+public/MOVIES
