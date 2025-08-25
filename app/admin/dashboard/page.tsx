@@ -1,13 +1,19 @@
-"use client"
+"use client";
 
-import { useEffect, useState, useCallback, useRef } from "react"
-import { useRouter } from "next/navigation"
-import { useToast } from "@/hooks/use-toast"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Checkbox } from "@/components/ui/checkbox"
+import { useEffect, useState, useCallback, useRef } from "react";
+import { useRouter } from "next/navigation";
+import { useToast } from "@/hooks/use-toast";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Users,
   Film,
@@ -29,18 +35,18 @@ import {
   RefreshCw,
   Wifi,
   WifiOff,
-} from "lucide-react"
+} from "lucide-react";
 
 interface MovieRequest {
-  _id: string
-  movieId: string
-  title: string
-  year?: number
-  user: string
-  status: "pending" | "approved" | "downloaded" | "rejected"
-  createdAt: string
-  updatedAt: string
-  adminNotes?: string
+  _id: string;
+  movieId: string;
+  title: string;
+  year?: number;
+  user: string;
+  status: "pending" | "approved" | "downloaded" | "rejected";
+  createdAt: string;
+  updatedAt: string;
+  adminNotes?: string;
 }
 
 // Mock data for analytics
@@ -51,7 +57,7 @@ const userGrowthData = [
   { month: "Apr", users: 1680, active: 1400 },
   { month: "May", users: 1850, active: 1580 },
   { month: "Jun", users: 2100, active: 1800 },
-]
+];
 
 const topMoviesData = [
   { title: "Spider-Man", views: 15420, rating: 4.8 },
@@ -59,26 +65,26 @@ const topMoviesData = [
   { title: "Batman", views: 11200, rating: 4.7 },
   { title: "Iron Man", views: 9800, rating: 4.6 },
   { title: "Thor", views: 8900, rating: 4.5 },
-]
+];
 
 const systemMetrics = [
   { metric: "Server Uptime", value: "99.9%", status: "healthy" },
   { metric: "Response Time", value: "120ms", status: "healthy" },
   { metric: "Storage Used", value: "68%", status: "warning" },
   { metric: "Bandwidth", value: "2.4TB", status: "healthy" },
-]
+];
 
 export default function AdminDashboard() {
-  const [movieRequests, setMovieRequests] = useState<MovieRequest[]>([])
-  const [loadingRequests, setLoadingRequests] = useState(true)
-  const [updatingRequest, setUpdatingRequest] = useState<string | null>(null)
-  const [selectedRequests, setSelectedRequests] = useState<string[]>([])
-  const [isOnline, setIsOnline] = useState(true)
-  const [lastUpdated, setLastUpdated] = useState<Date>(new Date())
-  const [autoRefresh, setAutoRefresh] = useState(true)
-  const [isRealTimeConnected, setIsRealTimeConnected] = useState(false)
-  const eventSourceRef = useRef<EventSource | null>(null)
-  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [movieRequests, setMovieRequests] = useState<MovieRequest[]>([]);
+  const [loadingRequests, setLoadingRequests] = useState(true);
+  const [updatingRequest, setUpdatingRequest] = useState<string | null>(null);
+  const [selectedRequests, setSelectedRequests] = useState<string[]>([]);
+  const [isOnline, setIsOnline] = useState(true);
+  const [lastUpdated, setLastUpdated] = useState<Date>(new Date());
+  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [isRealTimeConnected, setIsRealTimeConnected] = useState(false);
+  const eventSourceRef = useRef<EventSource | null>(null);
+  const retryTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [stats, setStats] = useState({
     totalUsers: 2100,
@@ -87,7 +93,7 @@ export default function AdminDashboard() {
     pendingRequests: 0,
     totalViews: 125000,
     avgRating: 4.7,
-  })
+  });
 
   const [recentActivity, setRecentActivity] = useState([
     {
@@ -114,127 +120,135 @@ export default function AdminDashboard() {
       message: "Movie approved: Spider-Man 2",
       time: "15 minutes ago",
     },
-  ])
+  ]);
 
-  const [connectionStatus, setConnectionStatus] = useState<"connecting" | "connected" | "disconnected" | "error">(
-    "connecting",
-  )
-  const [clientId, setClientId] = useState<string>("")
+  const [connectionStatus, setConnectionStatus] = useState<
+    "connecting" | "connected" | "disconnected" | "error"
+  >("connecting");
+  const [clientId, setClientId] = useState<string>("");
 
-  const router = useRouter()
-  const { toast } = useToast()
+  const router = useRouter();
+  const { toast } = useToast();
 
   const connectToRealTimeUpdates = useCallback(() => {
     if (eventSourceRef.current) {
-      eventSourceRef.current.close()
+      eventSourceRef.current.close();
     }
 
-    console.log("[v0] Connecting to enhanced real-time updates...")
-    setConnectionStatus("connecting")
+    console.log("[v0] Connecting to enhanced real-time updates...");
+    setConnectionStatus("connecting");
 
-    const eventSource = new EventSource("/api/admin/events")
-    eventSourceRef.current = eventSource
+    const eventSource = new EventSource("/api/admin/events");
+    eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
-      console.log("[v0] Real-time connection established")
-      setConnectionStatus("connected")
-      setIsRealTimeConnected(true)
-      setIsOnline(true)
+      console.log("[v0] Real-time connection established");
+      setConnectionStatus("connected");
+      setIsRealTimeConnected(true);
+      setIsOnline(true);
       toast({
         title: "Real-time Updates Connected",
-        description: "You'll now see movie requests instantly with MongoDB change streams",
-      })
-    }
+        description:
+          "You'll now see movie requests instantly with MongoDB change streams",
+      });
+    };
 
     eventSource.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data)
-        console.log("[v0] Real-time update received:", data.type)
+        const data = JSON.parse(event.data);
+        console.log("[v0] Real-time update received:", data.type);
 
         if (data.type === "requests_update") {
-          setMovieRequests(data.requests)
-          setLastUpdated(new Date())
-          setLoadingRequests(false)
+          setMovieRequests(data.requests);
+          setLastUpdated(new Date());
+          setLoadingRequests(false);
 
           // Update stats with real data
-          const pendingCount = data.requests.filter((req: MovieRequest) => req.status === "pending").length
-          setStats((prev) => ({ ...prev, pendingRequests: pendingCount }))
+          const pendingCount = data.requests.filter(
+            (req: MovieRequest) => req.status === "pending"
+          ).length;
+          setStats((prev) => ({ ...prev, pendingRequests: pendingCount }));
         } else if (data.type === "connected") {
-          console.log("[v0] SSE connection confirmed, client ID:", data.clientId)
-          setClientId(data.clientId)
-          setConnectionStatus("connected")
+          console.log(
+            "[v0] SSE connection confirmed, client ID:",
+            data.clientId
+          );
+          setClientId(data.clientId);
+          setConnectionStatus("connected");
         }
       } catch (error) {
-        console.error("[v0] Error parsing SSE data:", error)
-        setConnectionStatus("error")
+        console.error("[v0] Error parsing SSE data:", error);
+        setConnectionStatus("error");
       }
-    }
+    };
 
     eventSource.onerror = (error) => {
-      console.error("[v0] SSE connection error:", error)
-      setConnectionStatus("disconnected")
-      setIsRealTimeConnected(false)
-      setIsOnline(false)
+      console.error("[v0] SSE connection error:", error);
+      setConnectionStatus("disconnected");
+      setIsRealTimeConnected(false);
+      setIsOnline(false);
 
       // Retry connection after 5 seconds
       retryTimeoutRef.current = setTimeout(() => {
-        console.log("[v0] Retrying real-time connection...")
-        connectToRealTimeUpdates()
-      }, 5000)
-    }
+        console.log("[v0] Retrying real-time connection...");
+        connectToRealTimeUpdates();
+      }, 5000);
+    };
 
-    return eventSource
-  }, [toast])
+    return eventSource;
+  }, [toast]);
 
   const fetchMovieRequests = useCallback(
     async (showLoading = false) => {
       try {
-        if (showLoading) setLoadingRequests(true)
+        if (showLoading) setLoadingRequests(true);
 
         const response = await fetch("/api/request-movie", {
           cache: "no-store",
           headers: {
             "Cache-Control": "no-cache, no-store, must-revalidate",
           },
-        })
+        });
 
         if (response.ok) {
-          const requests = await response.json()
-          setMovieRequests(requests)
-          setLastUpdated(new Date())
-          setIsOnline(true)
+          const requests = await response.json();
+          setMovieRequests(requests);
+          setLastUpdated(new Date());
+          setIsOnline(true);
 
           // Update stats with real data
-          const pendingCount = requests.filter((req: MovieRequest) => req.status === "pending").length
-          setStats((prev) => ({ ...prev, pendingRequests: pendingCount }))
+          const pendingCount = requests.filter(
+            (req: MovieRequest) => req.status === "pending"
+          ).length;
+          setStats((prev) => ({ ...prev, pendingRequests: pendingCount }));
         } else {
-          throw new Error(`HTTP ${response.status}`)
+          throw new Error(`HTTP ${response.status}`);
         }
       } catch (error) {
-        console.error("Failed to fetch movie requests:", error)
-        setIsOnline(false)
+        console.error("Failed to fetch movie requests:", error);
+        setIsOnline(false);
 
         if (showLoading) {
           toast({
             title: "Connection Error",
             description: "Failed to load movie requests. Please try again.",
             variant: "destructive",
-          })
+          });
         }
       } finally {
-        if (showLoading) setLoadingRequests(false)
+        if (showLoading) setLoadingRequests(false);
       }
     },
-    [toast],
-  )
+    [toast]
+  );
 
   const updateRequestStatus = async (requestId: string, status: string) => {
     if (!confirm(`Are you sure you want to ${status} this request?`)) {
-      return
+      return;
     }
 
     try {
-      setUpdatingRequest(requestId)
+      setUpdatingRequest(requestId);
 
       const response = await fetch("/api/request-movie", {
         method: "PATCH",
@@ -242,38 +256,43 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ _id: requestId, status }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.ok && result.success) {
         toast({
           title: "Success",
           description: `Request ${status} successfully`,
-        })
-        await fetchMovieRequests(false)
+        });
+        await fetchMovieRequests(false);
       } else {
-        throw new Error(result.error || "Failed to update request")
+        throw new Error(result.error || "Failed to update request");
       }
     } catch (error) {
-      console.error("Error updating request:", error)
+      console.error("Error updating request:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to update request",
+        description:
+          error instanceof Error ? error.message : "Failed to update request",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUpdatingRequest(null)
+      setUpdatingRequest(null);
     }
-  }
+  };
 
   const deleteRequest = async (requestId: string) => {
-    if (!confirm("Are you sure you want to delete this request? This action cannot be undone.")) {
-      return
+    if (
+      !confirm(
+        "Are you sure you want to delete this request? This action cannot be undone."
+      )
+    ) {
+      return;
     }
 
     try {
-      setUpdatingRequest(requestId)
+      setUpdatingRequest(requestId);
 
       const response = await fetch("/api/request-movie", {
         method: "DELETE",
@@ -281,99 +300,104 @@ export default function AdminDashboard() {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({ _id: requestId }),
-      })
+      });
 
-      const result = await response.json()
+      const result = await response.json();
 
       if (response.ok && result.success) {
         toast({
           title: "Success",
           description: "Request deleted successfully",
-        })
-        setSelectedRequests((prev) => prev.filter((id) => id !== requestId))
-        await fetchMovieRequests(false)
+        });
+        setSelectedRequests((prev) => prev.filter((id) => id !== requestId));
+        await fetchMovieRequests(false);
       } else {
-        throw new Error(result.error || "Failed to delete request")
+        throw new Error(result.error || "Failed to delete request");
       }
     } catch (error) {
-      console.error("Error deleting request:", error)
+      console.error("Error deleting request:", error);
       toast({
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to delete request",
+        description:
+          error instanceof Error ? error.message : "Failed to delete request",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUpdatingRequest(null)
+      setUpdatingRequest(null);
     }
-  }
+  };
 
   const bulkUpdateStatus = async (requestIds: string[], status: string) => {
     try {
-      setUpdatingRequest("bulk")
+      setUpdatingRequest("bulk");
 
       const promises = requestIds.map((id) =>
         fetch("/api/request-movie", {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ _id: id, status }),
-        }),
-      )
+        })
+      );
 
-      const results = await Promise.allSettled(promises)
-      const successful = results.filter((result) => result.status === "fulfilled").length
+      const results = await Promise.allSettled(promises);
+      const successful = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
 
       toast({
         title: "Bulk Update Complete",
         description: `${successful}/${requestIds.length} requests updated successfully`,
-      })
+      });
 
-      setSelectedRequests([])
-      fetchMovieRequests(false)
+      setSelectedRequests([]);
+      fetchMovieRequests(false);
     } catch (error) {
-      console.error("Bulk update error:", error)
+      console.error("Bulk update error:", error);
       toast({
         title: "Error",
         description: "Failed to update some requests",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUpdatingRequest(null)
+      setUpdatingRequest(null);
     }
-  }
+  };
 
   const bulkDelete = async (requestIds: string[]) => {
     try {
-      setUpdatingRequest("bulk")
+      setUpdatingRequest("bulk");
 
       const promises = requestIds.map((id) =>
         fetch("/api/request-movie", {
           method: "DELETE",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ _id: id }),
-        }),
-      )
+        })
+      );
 
-      const results = await Promise.allSettled(promises)
-      const successful = results.filter((result) => result.status === "fulfilled").length
+      const results = await Promise.allSettled(promises);
+      const successful = results.filter(
+        (result) => result.status === "fulfilled"
+      ).length;
 
       toast({
         title: "Bulk Delete Complete",
         description: `${successful}/${requestIds.length} requests deleted successfully`,
-      })
+      });
 
-      setSelectedRequests([])
-      fetchMovieRequests(false)
+      setSelectedRequests([]);
+      fetchMovieRequests(false);
     } catch (error) {
-      console.error("Bulk delete error:", error)
+      console.error("Bulk delete error:", error);
       toast({
         title: "Error",
         description: "Failed to delete some requests",
         variant: "destructive",
-      })
+      });
     } finally {
-      setUpdatingRequest(null)
+      setUpdatingRequest(null);
     }
-  }
+  };
 
   const handleLogout = async () => {
     try {
@@ -381,53 +405,53 @@ export default function AdminDashboard() {
       await fetch("/api/admin/logout", {
         method: "POST",
         credentials: "include",
-      })
+      });
     } catch (error) {
-      console.error("Logout API error:", error)
+      console.error("Logout API error:", error);
     } finally {
       // Always clear localStorage and redirect regardless of API response
-      localStorage.removeItem("isAdmin")
-      window.location.href = "/admin/login"
+      localStorage.removeItem("isAdmin");
+      window.location.href = "/admin/login";
     }
-  }
+  };
 
   useEffect(() => {
     if (localStorage.getItem("isAdmin") !== "true") {
-      router.push("/admin/login")
-      return
+      router.push("/admin/login");
+      return;
     }
 
     if (autoRefresh) {
-      connectToRealTimeUpdates()
+      connectToRealTimeUpdates();
     } else {
-      fetchMovieRequests(true)
+      fetchMovieRequests(true);
     }
 
     return () => {
       if (eventSourceRef.current) {
-        eventSourceRef.current.close()
+        eventSourceRef.current.close();
       }
       if (retryTimeoutRef.current) {
-        clearTimeout(retryTimeoutRef.current)
+        clearTimeout(retryTimeoutRef.current);
       }
-    }
-  }, [router, connectToRealTimeUpdates, fetchMovieRequests, autoRefresh])
+    };
+  }, [router, connectToRealTimeUpdates, fetchMovieRequests, autoRefresh]);
 
   useEffect(() => {
     const handleOnline = () => {
-      setIsOnline(true)
-      fetchMovieRequests(false)
-    }
-    const handleOffline = () => setIsOnline(false)
+      setIsOnline(true);
+      fetchMovieRequests(false);
+    };
+    const handleOffline = () => setIsOnline(false);
 
-    window.addEventListener("online", handleOnline)
-    window.addEventListener("offline", handleOffline)
+    window.addEventListener("online", handleOnline);
+    window.addEventListener("offline", handleOffline);
 
     return () => {
-      window.removeEventListener("online", handleOnline)
-      window.removeEventListener("offline", handleOffline)
-    }
-  }, [fetchMovieRequests])
+      window.removeEventListener("online", handleOnline);
+      window.removeEventListener("offline", handleOffline);
+    };
+  }, [fetchMovieRequests]);
 
   const movieRequestsData = [
     {
@@ -450,35 +474,35 @@ export default function AdminDashboard() {
       count: movieRequests.filter((req) => req.status === "rejected").length,
       color: "bg-red-500",
     },
-  ]
+  ];
 
   const getActivityIcon = (type: string) => {
     switch (type) {
       case "user_signup":
-        return <UserCheck className="w-4 h-4 text-green-500" />
+        return <UserCheck className="w-4 h-4 text-green-500" />;
       case "movie_request":
-        return <Film className="w-4 h-4 text-blue-500" />
+        return <Film className="w-4 h-4 text-blue-500" />;
       case "system_alert":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
       case "movie_approved":
-        return <CheckCircle className="w-4 h-4 text-green-500" />
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       default:
-        return <Activity className="w-4 h-4 text-gray-500" />
+        return <Activity className="w-4 h-4 text-gray-500" />;
     }
-  }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "healthy":
-        return <CheckCircle className="w-4 h-4 text-green-500" />
+        return <CheckCircle className="w-4 h-4 text-green-500" />;
       case "warning":
-        return <AlertTriangle className="w-4 h-4 text-yellow-500" />
+        return <AlertTriangle className="w-4 h-4 text-yellow-500" />;
       case "error":
-        return <XCircle className="w-4 h-4 text-red-500" />
+        return <XCircle className="w-4 h-4 text-red-500" />;
       default:
-        return <Activity className="w-4 h-4 text-gray-500" />
+        return <Activity className="w-4 h-4 text-gray-500" />;
     }
-  }
+  };
 
   const getStatusBadge = (status: string) => {
     const variants = {
@@ -486,9 +510,11 @@ export default function AdminDashboard() {
       approved: "bg-green-600 text-white",
       downloaded: "bg-blue-600 text-white",
       rejected: "bg-red-600 text-white",
-    }
-    return variants[status as keyof typeof variants] || "bg-gray-600 text-white"
-  }
+    };
+    return (
+      variants[status as keyof typeof variants] || "bg-gray-600 text-white"
+    );
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -496,7 +522,9 @@ export default function AdminDashboard() {
       <header className="border-b border-border bg-card/50 backdrop-blur-sm">
         <div className="flex h-16 items-center justify-between px-6">
           <div className="flex items-center gap-4">
-            <h1 className="text-2xl font-bold text-foreground">JOYFLIX Admin</h1>
+            <h1 className="text-2xl font-bold text-foreground">
+              JOYFLIX Admin
+            </h1>
             <Badge variant="secondary" className="bg-primary/10 text-primary">
               Dashboard
             </Badge>
@@ -505,7 +533,9 @@ export default function AdminDashboard() {
                 <div className="flex items-center gap-1 text-green-600">
                   <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                   <Wifi className="w-4 h-4" />
-                  <span className="text-xs font-medium">Real-time (Change Streams)</span>
+                  <span className="text-xs font-medium">
+                    Real-time (Change Streams)
+                  </span>
                 </div>
               ) : connectionStatus === "connecting" ? (
                 <div className="flex items-center gap-1 text-yellow-600">
@@ -526,8 +556,14 @@ export default function AdminDashboard() {
                   <span className="text-xs">Offline</span>
                 </div>
               )}
-              <span className="text-xs text-muted-foreground">Updated: {lastUpdated.toLocaleTimeString()}</span>
-              {clientId && <span className="text-xs text-muted-foreground">ID: {clientId.slice(-6)}</span>}
+              <span className="text-xs text-muted-foreground">
+                Updated: {lastUpdated.toLocaleTimeString()}
+              </span>
+              {clientId && (
+                <span className="text-xs text-muted-foreground">
+                  ID: {clientId.slice(-6)}
+                </span>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-2">
@@ -538,34 +574,48 @@ export default function AdminDashboard() {
               disabled={loadingRequests}
               className="gap-2"
             >
-              <RefreshCw className={`w-4 h-4 ${loadingRequests ? "animate-spin" : ""}`} />
+              <RefreshCw
+                className={`w-4 h-4 ${loadingRequests ? "animate-spin" : ""}`}
+              />
               Refresh
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => {
-                setAutoRefresh(!autoRefresh)
+                setAutoRefresh(!autoRefresh);
                 if (!autoRefresh) {
-                  connectToRealTimeUpdates()
+                  connectToRealTimeUpdates();
                 } else if (eventSourceRef.current) {
-                  eventSourceRef.current.close()
-                  setIsRealTimeConnected(false)
-                  setConnectionStatus("disconnected")
+                  eventSourceRef.current.close();
+                  setIsRealTimeConnected(false);
+                  setConnectionStatus("disconnected");
                 }
               }}
               className={`gap-2 ${
-                autoRefresh && connectionStatus === "connected" ? "bg-green-50 text-green-700 border-green-200" : ""
+                autoRefresh && connectionStatus === "connected"
+                  ? "bg-green-50 text-green-700 border-green-200"
+                  : ""
               }`}
             >
               <Activity className="w-4 h-4" />
               Real-time: {autoRefresh ? "ON" : "OFF"}
             </Button>
-            <Button variant="outline" size="sm" onClick={() => router.push("/")} className="gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => router.push("/")}
+              className="gap-2"
+            >
               <Home className="w-4 h-4" />
               Home
             </Button>
-            <Button variant="outline" size="sm" onClick={handleLogout} className="gap-2 bg-transparent">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleLogout}
+              className="gap-2 bg-transparent"
+            >
               <LogOut className="w-4 h-4" />
               Logout
             </Button>
@@ -631,26 +681,41 @@ export default function AdminDashboard() {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Users
+                </CardTitle>
                 <Users className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.totalUsers.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+12% from last month</p>
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.totalUsers.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  +12% from last month
+                </p>
                 <div className="w-full bg-muted rounded-full h-1 mt-2">
-                  <div className="bg-blue-500 h-1 rounded-full transition-all duration-1000" style={{ width: "85%" }} />
+                  <div
+                    className="bg-blue-500 h-1 rounded-full transition-all duration-1000"
+                    style={{ width: "85%" }}
+                  />
                 </div>
               </CardContent>
             </Card>
 
             <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Active Users</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Active Users
+                </CardTitle>
                 <Activity className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.activeUsers.toLocaleString()}</div>
-                <p className="text-xs text-muted-foreground">+8% from last month</p>
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.activeUsers.toLocaleString()}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  +8% from last month
+                </p>
                 <div className="w-full bg-muted rounded-full h-1 mt-2">
                   <div
                     className="bg-green-500 h-1 rounded-full transition-all duration-1000"
@@ -662,11 +727,15 @@ export default function AdminDashboard() {
 
             <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total Movies</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Total Movies
+                </CardTitle>
                 <Film className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.totalMovies.toLocaleString()}</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.totalMovies.toLocaleString()}
+                </div>
                 <p className="text-xs text-muted-foreground">+25 this week</p>
                 <div className="w-full bg-muted rounded-full h-1 mt-2">
                   <div
@@ -679,17 +748,24 @@ export default function AdminDashboard() {
 
             <Card className="metric-card hover:shadow-lg transition-shadow">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Pending Requests</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  Pending Requests
+                </CardTitle>
                 <Clock className="w-4 h-4 text-muted-foreground" />
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-foreground">{stats.pendingRequests}</div>
+                <div className="text-2xl font-bold text-foreground">
+                  {stats.pendingRequests}
+                </div>
                 <p className="text-xs text-muted-foreground">Needs attention</p>
                 <div className="w-full bg-muted rounded-full h-1 mt-2">
                   <div
                     className="bg-yellow-500 h-1 rounded-full transition-all duration-1000"
                     style={{
-                      width: `${Math.min((stats.pendingRequests / 10) * 100, 100)}%`,
+                      width: `${Math.min(
+                        (stats.pendingRequests / 10) * 100,
+                        100
+                      )}%`,
                     }}
                   />
                 </div>
@@ -715,14 +791,20 @@ export default function AdminDashboard() {
                         <Film className="w-5 h-5" />
                         Movie Requests Management
                       </CardTitle>
-                      <CardDescription>Monitor and manage user movie requests</CardDescription>
+                      <CardDescription>
+                        Monitor and manage user movie requests
+                      </CardDescription>
                     </div>
                     {selectedRequests.length > 0 && (
                       <div className="flex items-center gap-2">
-                        <Badge variant="secondary">{selectedRequests.length} selected</Badge>
+                        <Badge variant="secondary">
+                          {selectedRequests.length} selected
+                        </Badge>
                         <Button
                           size="sm"
-                          onClick={() => bulkUpdateStatus(selectedRequests, "approved")}
+                          onClick={() =>
+                            bulkUpdateStatus(selectedRequests, "approved")
+                          }
                           disabled={updatingRequest === "bulk"}
                           className="gap-1 bg-green-600 hover:bg-green-700"
                         >
@@ -765,24 +847,41 @@ export default function AdminDashboard() {
                               checked={selectedRequests.includes(request._id)}
                               onCheckedChange={(checked) => {
                                 if (checked) {
-                                  setSelectedRequests((prev) => [...prev, request._id])
+                                  setSelectedRequests((prev) => [
+                                    ...prev,
+                                    request._id,
+                                  ]);
                                 } else {
-                                  setSelectedRequests((prev) => prev.filter((id) => id !== request._id))
+                                  setSelectedRequests((prev) =>
+                                    prev.filter((id) => id !== request._id)
+                                  );
                                 }
                               }}
                             />
                             <div className="flex-1">
                               <div className="flex items-center gap-3 mb-2">
-                                <h4 className="font-semibold text-foreground">{request.title}</h4>
-                                <Badge className={getStatusBadge(request.status)}>{request.status}</Badge>
+                                <h4 className="font-semibold text-foreground">
+                                  {request.title}
+                                </h4>
+                                <Badge
+                                  className={getStatusBadge(request.status)}
+                                >
+                                  {request.status}
+                                </Badge>
                               </div>
                               <div className="text-sm text-muted-foreground space-y-1">
                                 <p>
-                                  Year: {request.year || "N/A"} • User: {request.user}
+                                  Year: {request.year || "N/A"} • User:{" "}
+                                  {request.user}
                                 </p>
-                                <p>Requested: {new Date(request.createdAt).toLocaleString()}</p>
+                                <p>
+                                  Requested:{" "}
+                                  {new Date(request.createdAt).toLocaleString()}
+                                </p>
                                 {request.adminNotes && (
-                                  <p className="text-xs bg-muted p-2 rounded">Notes: {request.adminNotes}</p>
+                                  <p className="text-xs bg-muted p-2 rounded">
+                                    Notes: {request.adminNotes}
+                                  </p>
                                 )}
                               </div>
                             </div>
@@ -802,7 +901,9 @@ export default function AdminDashboard() {
                             {request.status === "pending" && (
                               <Button
                                 size="sm"
-                                onClick={() => updateRequestStatus(request._id, "approved")}
+                                onClick={() =>
+                                  updateRequestStatus(request._id, "approved")
+                                }
                                 disabled={updatingRequest === request._id}
                                 className="gap-1 bg-green-600 hover:bg-green-700"
                               >
@@ -814,7 +915,9 @@ export default function AdminDashboard() {
                             {request.status === "approved" && (
                               <Button
                                 size="sm"
-                                onClick={() => updateRequestStatus(request._id, "downloaded")}
+                                onClick={() =>
+                                  updateRequestStatus(request._id, "downloaded")
+                                }
                                 disabled={updatingRequest === request._id}
                                 className="gap-1 bg-blue-600 hover:bg-blue-700"
                               >
@@ -847,7 +950,9 @@ export default function AdminDashboard() {
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <CardTitle>User Growth</CardTitle>
-                    <CardDescription>Monthly user registration and activity</CardDescription>
+                    <CardDescription>
+                      Monthly user registration and activity
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
@@ -861,8 +966,12 @@ export default function AdminDashboard() {
                               {data.month}
                             </Badge>
                             <div>
-                              <p className="text-sm font-medium">Total: {data.users.toLocaleString()}</p>
-                              <p className="text-xs text-muted-foreground">Active: {data.active.toLocaleString()}</p>
+                              <p className="text-sm font-medium">
+                                Total: {data.users.toLocaleString()}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Active: {data.active.toLocaleString()}
+                              </p>
                             </div>
                           </div>
                           <div className="w-32 bg-muted rounded-full h-3 relative overflow-hidden">
@@ -887,24 +996,36 @@ export default function AdminDashboard() {
                 <Card className="hover:shadow-lg transition-shadow">
                   <CardHeader>
                     <CardTitle>Movie Requests</CardTitle>
-                    <CardDescription>Distribution of request statuses</CardDescription>
+                    <CardDescription>
+                      Distribution of request statuses
+                    </CardDescription>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-4">
                       {movieRequestsData.map((data) => {
-                        const total = movieRequestsData.reduce((sum, item) => sum + item.count, 0)
-                        const percentage = total > 0 ? (data.count / total) * 100 : 0
+                        const total = movieRequestsData.reduce(
+                          (sum, item) => sum + item.count,
+                          0
+                        );
+                        const percentage =
+                          total > 0 ? (data.count / total) * 100 : 0;
 
                         return (
                           <div key={data.status} className="space-y-2">
                             <div className="flex items-center justify-between">
                               <div className="flex items-center gap-3">
-                                <div className={`w-4 h-4 rounded-full ${data.color} shadow-sm`} />
-                                <span className="font-medium">{data.status}</span>
+                                <div
+                                  className={`w-4 h-4 rounded-full ${data.color} shadow-sm`}
+                                />
+                                <span className="font-medium">
+                                  {data.status}
+                                </span>
                               </div>
                               <div className="flex items-center gap-2">
                                 <Badge variant="secondary">{data.count}</Badge>
-                                <span className="text-xs text-muted-foreground">{percentage.toFixed(1)}%</span>
+                                <span className="text-xs text-muted-foreground">
+                                  {percentage.toFixed(1)}%
+                                </span>
                               </div>
                             </div>
                             <div className="w-full bg-muted rounded-full h-3 relative overflow-hidden">
@@ -916,7 +1037,7 @@ export default function AdminDashboard() {
                               />
                             </div>
                           </div>
-                        )
+                        );
                       })}
                     </div>
                   </CardContent>
@@ -928,24 +1049,38 @@ export default function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Top Movies</CardTitle>
-                  <CardDescription>Most viewed movies this month</CardDescription>
+                  <CardDescription>
+                    Most viewed movies this month
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {topMoviesData.map((movie, index) => (
-                      <div key={movie.title} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div
+                        key={movie.title}
+                        className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
+                      >
                         <div className="flex items-center gap-3">
-                          <Badge variant="secondary" className="w-8 h-8 rounded-full flex items-center justify-center">
+                          <Badge
+                            variant="secondary"
+                            className="w-8 h-8 rounded-full flex items-center justify-center"
+                          >
                             {index + 1}
                           </Badge>
                           <div>
-                            <p className="font-medium text-foreground">{movie.title}</p>
-                            <p className="text-sm text-muted-foreground">{movie.views.toLocaleString()} views</p>
+                            <p className="font-medium text-foreground">
+                              {movie.title}
+                            </p>
+                            <p className="text-sm text-muted-foreground">
+                              {movie.views.toLocaleString()} views
+                            </p>
                           </div>
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                          <span className="text-sm font-medium">{movie.rating}</span>
+                          <span className="text-sm font-medium">
+                            {movie.rating}
+                          </span>
                         </div>
                       </div>
                     ))}
@@ -963,12 +1098,19 @@ export default function AdminDashboard() {
                 <CardContent>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {systemMetrics.map((metric) => (
-                      <div key={metric.metric} className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                      <div
+                        key={metric.metric}
+                        className="flex items-center justify-between p-4 rounded-lg bg-muted/50"
+                      >
                         <div className="flex items-center gap-3">
                           {getStatusIcon(metric.status)}
                           <div>
-                            <p className="font-medium text-foreground">{metric.metric}</p>
-                            <p className="text-2xl font-bold text-foreground">{metric.value}</p>
+                            <p className="font-medium text-foreground">
+                              {metric.metric}
+                            </p>
+                            <p className="text-2xl font-bold text-foreground">
+                              {metric.value}
+                            </p>
                           </div>
                         </div>
                         <Badge
@@ -976,8 +1118,8 @@ export default function AdminDashboard() {
                             metric.status === "healthy"
                               ? "default"
                               : metric.status === "warning"
-                                ? "secondary"
-                                : "destructive"
+                              ? "secondary"
+                              : "destructive"
                           }
                         >
                           {metric.status}
@@ -993,16 +1135,25 @@ export default function AdminDashboard() {
               <Card>
                 <CardHeader>
                   <CardTitle>Recent Activity</CardTitle>
-                  <CardDescription>Latest system events and user actions</CardDescription>
+                  <CardDescription>
+                    Latest system events and user actions
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {recentActivity.map((activity) => (
-                      <div key={activity.id} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                      <div
+                        key={activity.id}
+                        className="flex items-start gap-3 p-3 rounded-lg bg-muted/50"
+                      >
                         {getActivityIcon(activity.type)}
                         <div className="flex-1">
-                          <p className="text-sm text-foreground">{activity.message}</p>
-                          <p className="text-xs text-muted-foreground">{activity.time}</p>
+                          <p className="text-sm text-foreground">
+                            {activity.message}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {activity.time}
+                          </p>
                         </div>
                       </div>
                     ))}
@@ -1014,5 +1165,5 @@ export default function AdminDashboard() {
         </main>
       </div>
     </div>
-  )
+  );
 }
